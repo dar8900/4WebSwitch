@@ -53,6 +53,7 @@ static void ControlAlarmsThr()
 bool CheckAlarms()
 {
 	int i = 0;
+	ControlAlarmsThr();
 	for(i = 0; i < MAX_ALARM; i++)
 	{
 		if(Alarms[i].IsActive)
