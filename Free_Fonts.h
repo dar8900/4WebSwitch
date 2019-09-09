@@ -33,7 +33,7 @@
 //       B = Bold
 //       O = Oblique (letter O not zero)
 //       I = Italic
-//       # =  point size, either 9, 12, 18 or 24
+//       # =  point size, either 9, 12, 18 or 24   https://websemantics.uk/articles/font-size-conversion/
 //
 //  Setting the font to NULL will select the GLCD font:
 //

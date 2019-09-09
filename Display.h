@@ -21,6 +21,43 @@ typedef struct
 }PAGE_DESCRIPTOR;
 
 
+
+typedef struct
+{
+
+	double *FirstLineMeasure;
+	double *SecondLineMeasure;
+	double *ThirdLineMeasure;
+	
+	char   *UdmFirstLine;
+	char   *UdmSecondLine;
+	char   *UdmThirdLine;
+	
+}MEASURE_PAGES;
+
+typedef struct
+{
+	double Value;
+	double RefactorValue;
+	char   *Odg;
+}REFORMAT;
+
+typedef enum
+{
+	LINE_MEASURES = 0,
+	POWER_MEASURES,
+	TOTAL_ENERGIES,
+	PARTIAL_ENERGIES,
+	MAX_LINE_MEASURES,
+	MIN_LINE_MEASURES,
+	MAX_POWER_MEASURES,
+	MIN_POWER_MEASURES,
+	AVG_LINE_MEASURES,
+	AVG_POWER_MEASURES,
+	MAX_MEASURE_PAGES
+	
+}MEASURES_ITEM;
+
 void DisplayInit(void);
 
 void TaskDisplay(void);

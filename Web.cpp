@@ -14,6 +14,8 @@
 #define MY_WIFI_LIST		 3
 #define MAX_WIFI_DEVICE		10
 
+// #define ALEXA
+
 // extern String Header;
 // extern String WebPage_1;
 // extern String ReleTable_1;
@@ -57,6 +59,7 @@ Chrono ToggleRele1Timer;
 // bool ClientConnected = false;
 // uint8_t OldReleStatus[N_RELE];
 bool WifiConnected = false;
+uint8_t WifiSignal;
 
 
 NETWORK_LIST WifiList[MY_WIFI_LIST] = 
@@ -101,14 +104,14 @@ String IPAddr()
 	return IP;
 }
 
-uint8_t WifiSignalPower()
+static uint8_t GetWifiSignalPower()
 {
 	int32_t Signal = abs(WiFi.RSSI());	
-	if(Signal >= 0 && Signal <= 25)
+	if(Signal >= 0 && Signal <= 50)
 		return OTTIMO;
-	else if(Signal >= 26 && Signal <= 70)
+	else if(Signal >= 51 && Signal <= 75)
 		return BUONO;
-	else if(Signal >= 71 && Signal <= 90)
+	else if(Signal >= 76 && Signal <= 90)
 		return PESSIMO;
 	else
 		return NO_SIGNAL;
@@ -134,11 +137,20 @@ static String FormatDateFromWeb(time_t TimeStamp)
 static void GetTime()
 {
 	timeClient.update();
+	String Hour = "", Minute = "";
 	uint32_t TimeInSecond = timeClient.getEpochTime();	
-	GlobalTime.Hour = (uint8_t)((TimeInSecond / 3600) % 60);
+	GlobalTime.Hour = (uint8_t)((TimeInSecond / 3600) % 24);
 	GlobalTime.Minute = (uint8_t)((TimeInSecond / 60) % 60);
 	GlobalTime.Second = (uint8_t)(TimeInSecond % 60);
-	TimeFormatted = timeClient.getFormattedTime();
+	if(GlobalTime.Hour > 9)
+		Hour = String(GlobalTime.Hour);
+	else
+		Hour = "0" + String(GlobalTime.Hour);
+	if(GlobalTime.Minute > 9)
+		Minute = String(GlobalTime.Minute);
+	else
+		Minute = "0" + String(GlobalTime.Minute);	
+	TimeFormatted = Hour + ":" + Minute;
 	DateFormatted = FormatDateFromWeb((time_t)TimeInSecond);
 	return;
 }
@@ -230,6 +242,7 @@ static void AlexaInit()
 
 static void ScanResult(int N_Device)
 {
+	DBG("Device trovati: " + String(N_Device));
 	if(N_Device <= MAX_WIFI_DEVICE)
 	{
 		for(int Device = 0; Device < N_Device; Device++)
@@ -253,9 +266,9 @@ void WifiInit()
 	int DeviceFoundIndex = 0, MyDeviceList = 0;
 	bool MyDeviceFounded = false;
 	WiFi.mode(WIFI_STA);
-	WiFi.disconnect();	
-	delay(100);
-	WiFi.scanNetworksAsync(ScanResult);
+
+	DeviceFoundIndex = WiFi.scanNetworks();
+	ScanResult(DeviceFoundIndex);
 	for(DeviceFoundIndex = 0; DeviceFoundIndex < MAX_WIFI_DEVICE; DeviceFoundIndex++)
 	{
 		MyDeviceFounded = false;
@@ -263,6 +276,7 @@ void WifiInit()
 		{
 			if(WifiDeviceList[DeviceFoundIndex].DeviceSSID == String(WifiList[MyDeviceList].SSID))
 			{
+				DBG(WifiDeviceList[DeviceFoundIndex].DeviceSSID);
 				MyDeviceFounded = true;
 				break;
 			}
@@ -286,13 +300,15 @@ void WifiInit()
 		// server.begin();
 		timeClient.begin();
 		DBG("IP: " + IPAddr());
-		DBG("Segnale WiFi: " + SignalLabel[WifiSignalPower()]);
 		delay(1000);
 		if(CheckWifiCon())
 		{
+#ifdef ALEXA			
 			AlexaInit();
+#endif			
 		}
 		GetTime();
+		WifiSignal = GetWifiSignalPower();
 	}
 
 }
@@ -443,11 +459,14 @@ void TaskWeb()
 {
 	if(WifiConnected)
 	{
+#ifdef ALEXA		
 		GesAlexa();
+#endif		
 		if(GetTimeTimer.hasPassed(15, true))
 		{
 			GetTime();
 		}
+		WifiSignal = GetWifiSignalPower();
 	}
 	else
 	{

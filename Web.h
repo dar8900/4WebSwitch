@@ -26,10 +26,10 @@ typedef enum
 extern bool WifiConnected;
 extern String TimeFormatted;
 extern String DateFormatted;
+extern uint8_t WifiSignal;
 
 void WifiInit(void);
 String IPAddr(void);
-uint8_t WifiSignalPower(void);
 
 void TaskWeb(void);
 

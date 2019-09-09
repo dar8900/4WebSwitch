@@ -4,12 +4,12 @@
 #include "Web.h"
 #include "KeyBoard.h"
 #include "Display.h"
+#include "Alarms.h"
 
-
-// #define TASK_DISPLAY
-#define TASK_KEYBOARD
-#define TASK_MEASURE
-// #define TASK_WEB
+#define TASK_DISPLAY
+// #define TASK_KEYBOARD
+// #define TASK_MEASURE
+#define TASK_WEB
 
 
 void setup()
@@ -20,11 +20,13 @@ void setup()
 #endif	
 	Serial.begin(115200);
 	AnalogBegin();
-	ReleInit();
+#ifdef TASK_DISPLAY	
+	DisplayInit();
+#endif	
 #ifdef TASK_WEB
 	WifiInit();
 #endif	
-	
+	ReleInit();
 }
 
 void loop()
@@ -32,6 +34,8 @@ void loop()
 #ifdef TASK_MEASURE
 	TaskMeasure();
 #endif
+
+	TaskAlarm();
 
 #ifdef TASK_WEB
 	TaskWeb();

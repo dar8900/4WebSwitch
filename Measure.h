@@ -9,6 +9,29 @@
 
 typedef struct
 {
+	double   MaxCurrent;
+	double 	 MinCurrent;
+	double   MaxVoltage;
+	double 	 MinVoltage;
+	double   MaxActivePower;
+	double 	 MinActivePower;
+	double   MaxReactivePower;
+	double 	 MinReactivePower;
+	double   MaxApparentPower;
+	double 	 MinApparentPower;
+	double   MaxPowerFactor;
+	double 	 MinPowerFactor;
+	double 	 CurrentAvg;
+	double   VoltageAvg;
+	double   ActivePowerAvg;
+	double   ReactivePowerAvg;
+	double   ApparentPowerAvg;
+	double   PowerFactorAvg;
+}MAX_MIN_AVG_MEASURE;
+
+
+typedef struct
+{
 	double   CurrentRMS;
 	double   VoltageRMS;
     double   ApparentPower;
@@ -21,7 +44,10 @@ typedef struct
 	double   PartialActiveEnergy;
 	double   PartialReactiveEnergy;
     double   PowerFactor;
+	MAX_MIN_AVG_MEASURE MaxMinAvg;
 }GENERAL_MEASURES;
+
+
 
 extern GENERAL_MEASURES Measures;
 

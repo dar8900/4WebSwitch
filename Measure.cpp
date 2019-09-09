@@ -7,6 +7,7 @@
 
 #ifdef SIM_WAVEFORMS
 
+#define TO_RADIANTS(Angle)     (Angle*M_PI/180)
 
 #define SIM_V_PEAK(V)	       (V * sqrt(2))
 #define SIM_I_PEAK(I)	       (I * sqrt(2))
@@ -14,13 +15,13 @@
 #define SIM_V_DELAY(Grad)      ((Grad * M_PI)/180)
 #define SIM_I_DELAY(Grad)	   ((Grad * M_PI)/180)  
 
-#define SIM_FREQ(Frq)   	   (2 * M_PI * (1/Frq))
+#define SIM_FREQ(Frq)   	   (2 * M_PI * (Frq))
 
 #define DFLT_PEAK_I			    5.0
 #define DFLT_DELAY_I		    0.0
 
 // #define REQUEST_DELAY
-#define REQUEST_PEAK	
+// #define REQUEST_PEAK	
 
 #endif
 
@@ -52,11 +53,14 @@ ADS1115 AnalogBoard(ADS1115_DEFAULT_ADDRESS);
 Chrono CalcEnergyTimer;
 
 double   AdcCurrentValues[ADC_SAMPLE], AdcVoltageValues[ADC_SAMPLE];
-uint32_t EnergyAccumulatorCnt;
+uint32_t EnergyAccumulatorCnt, AvgCounter;
 double   ApparentEnergyAccumulator, ActiveEnergyAccumulator, ReactiveEnergyAccumulator;
+double   CurrentAvgAcc, VoltageAvgAcc, ActivePowerAvgAcc, ReactivePowerAvgAcc, ApparentPowerAvgAcc, PowerFactorAvgAcc;
 GENERAL_MEASURES Measures;
 
 uint8_t  SamplingWindow = 0;
+
+Chrono CalcAvgTimer(Chrono::SECONDS);
 
 #ifdef SIM_WAVEFORMS
 static double SimVoltageWave[ADC_SAMPLE];
@@ -65,6 +69,75 @@ double UserPeakI = DFLT_PEAK_I, UserDelayI = DFLT_DELAY_I;
 Chrono TimerPrintDBG(Chrono::SECONDS);
 
 #endif
+
+
+static void CalcMaxMinAvg()
+{
+	if(Measures.CurrentRMS > Measures.MaxMinAvg.MaxCurrent)
+		Measures.MaxMinAvg.MaxCurrent = Measures.CurrentRMS;
+	
+	if(Measures.CurrentRMS < Measures.MaxMinAvg.MinCurrent)
+		Measures.MaxMinAvg.MinCurrent = Measures.CurrentRMS;
+	
+	if(Measures.VoltageRMS > Measures.MaxMinAvg.MaxVoltage)
+		Measures.MaxMinAvg.MaxVoltage = Measures.VoltageRMS;
+	
+	if(Measures.VoltageRMS < Measures.MaxMinAvg.MinVoltage)
+		Measures.MaxMinAvg.MinVoltage = Measures.VoltageRMS;
+	
+	if(Measures.ActivePower > Measures.MaxMinAvg.MaxActivePower)
+		Measures.MaxMinAvg.MaxActivePower = Measures.ActivePower;
+	
+	if(Measures.ActivePower < Measures.MaxMinAvg.MinActivePower)
+		Measures.MaxMinAvg.MinActivePower = Measures.ActivePower;
+	
+	if(Measures.ReactivePower > Measures.MaxMinAvg.MaxReactivePower)
+		Measures.MaxMinAvg.MaxReactivePower = Measures.ReactivePower;
+	
+	if(Measures.ReactivePower < Measures.MaxMinAvg.MinReactivePower)
+		Measures.MaxMinAvg.MinReactivePower = Measures.ReactivePower;
+	
+	if(Measures.ApparentEnergy > Measures.MaxMinAvg.MaxApparentPower)
+		Measures.MaxMinAvg.MaxApparentPower = Measures.ApparentEnergy;
+	
+	if(Measures.ApparentEnergy < Measures.MaxMinAvg.MinApparentPower)
+		Measures.MaxMinAvg.MinApparentPower = Measures.ApparentEnergy;
+	
+	if(Measures.PowerFactor > Measures.MaxMinAvg.MaxPowerFactor)
+		Measures.MaxMinAvg.MaxPowerFactor = Measures.PowerFactor;
+	
+	if(Measures.PowerFactor < Measures.MaxMinAvg.MinPowerFactor)
+		Measures.MaxMinAvg.MinPowerFactor = Measures.PowerFactor;
+	
+	CurrentAvgAcc += Measures.CurrentRMS;
+	VoltageAvgAcc += Measures.VoltageRMS;
+	ActivePowerAvgAcc += Measures.ActivePower;
+	ReactivePowerAvgAcc += Measures.ReactivePower;
+	ApparentPowerAvgAcc += Measures.ApparentPower;
+	PowerFactorAvgAcc += Measures.PowerFactor;
+	AvgCounter++;
+	
+	if(CalcAvgTimer.hasPassed(60, true))
+	{
+		if(AvgCounter != 0)
+		{
+			Measures.MaxMinAvg.CurrentAvg       = (CurrentAvgAcc / AvgCounter);
+			Measures.MaxMinAvg.VoltageAvg       = (VoltageAvgAcc / AvgCounter);
+			Measures.MaxMinAvg.ActivePowerAvg   = (ActivePowerAvgAcc / AvgCounter);
+			Measures.MaxMinAvg.ReactivePowerAvg = (ReactivePowerAvgAcc / AvgCounter);
+			Measures.MaxMinAvg.ApparentPowerAvg = (ApparentPowerAvgAcc / AvgCounter);
+			Measures.MaxMinAvg.PowerFactorAvg   = (PowerFactorAvgAcc / AvgCounter);
+		}
+		CurrentAvgAcc = 0.0;
+		VoltageAvgAcc = 0.0;
+		ActivePowerAvgAcc = 0.0;
+		ReactivePowerAvgAcc = 0.0;
+		ApparentPowerAvgAcc = 0.0;
+		PowerFactorAvgAcc = 0.0;
+		AvgCounter = 0;
+	}
+}
+
 
 #ifdef SIM_WAVEFORMS
 static void CalcSimCurrentVoltage(bool First)
@@ -117,8 +190,8 @@ static void CalcSimCurrentVoltage(bool First)
 
 	for(Sample = 0; Sample < ADC_SAMPLE; Sample++)
 	{
-		SimVoltageWave[Sample] = SIM_V_PEAK(230) * sin((SIM_FREQ(50) * Sample) + SIM_V_DELAY(0));
-		SimCurrentWave[Sample] = SIM_I_PEAK(UserPeakI)   * sin((SIM_FREQ(50) * Sample) + SIM_I_DELAY(UserDelayI));		
+		SimVoltageWave[Sample] = SIM_V_PEAK(220)*sin(TO_RADIANTS(Sample * 2.88));
+		SimCurrentWave[Sample] = SIM_I_PEAK(UserPeakI)*sin(TO_RADIANTS((Sample * 2.88)) - TO_RADIANTS(30));	
 		VRms += (SimVoltageWave[Sample] * SimVoltageWave[Sample]);
 		IRms += (SimCurrentWave[Sample] * SimCurrentWave[Sample]);
 		RealPower += (SimCurrentWave[Sample] * SimVoltageWave[Sample]);
@@ -137,12 +210,16 @@ static void CalcSimCurrentVoltage(bool First)
 	Measures.VoltageRMS = VRms;
 	Measures.ApparentPower = Measures.CurrentRMS * Measures.VoltageRMS;
 	Measures.ReactivePower = Measures.ApparentPower - Measures.ActivePower;
-	Measures.PowerFactor = Measures.ActivePower / Measures.ApparentPower;
-	if(TimerPrintDBG.hasPassed(2, true))
+	if(Measures.ApparentPower != 0.0)
+		Measures.PowerFactor = Measures.ActivePower / Measures.ApparentPower;
+	else
+		Measures.PowerFactor = INVALID_PF_VALUE;
+	CalcMaxMinAvg();
+	if(TimerPrintDBG.hasPassed(5, true))
 	{
 		DBG("");
 		DBG("Tensione RMS simulata: " + String(Measures.VoltageRMS, 3) + "V");
-		DBG("Corrent RMS simulata: " + String(Measures.CurrentRMS, 3) + "I");
+		DBG("Corrent RMS simulata: " + String(Measures.CurrentRMS, 3) + "A");
 		DBG("Potenza apparente simulata: " + String(Measures.ApparentPower, 3) + "VA");
 		DBG("Potenza attiva simulata: " + String(Measures.ActivePower, 3) + "W");
 		DBG("Potenza reattiva simulata: " + String(Measures.ReactivePower, 3) + "VAr");
@@ -183,6 +260,8 @@ static bool SearchZeroV()
 	}
 	return ZeroVFound;
 }
+
+
 
 static void CalcMeasure()
 {
@@ -234,6 +313,7 @@ static void CalcMeasure()
 				else
 					Measures.PowerFactor = INVALID_PF_VALUE;
 			}
+			CalcMaxMinAvg();
 		}
 	}
 }
@@ -242,29 +322,24 @@ static void CalcMeasure()
 static void CalcEnergy()
 {
 	ApparentEnergyAccumulator += Measures.ApparentPower;
-	ActiveEnergyAccumulator += Measures.ActivePower;
+	ActiveEnergyAccumulator   += Measures.ActivePower;
 	ReactiveEnergyAccumulator += Measures.ReactivePower;
 	EnergyAccumulatorCnt++;
 	if(CalcEnergyTimer.hasPassed(1000, true))
 	{
-		if(EnergyAccumulatorCnt > 0)
+		if(EnergyAccumulatorCnt != 0)
 		{
-			Measures.ApparentEnergy += (ApparentEnergyAccumulator / EnergyAccumulatorCnt);
-			Measures.ActiveEnergy += (ActiveEnergyAccumulator / EnergyAccumulatorCnt);
-			Measures.ReactiveEnergy += (ReactiveEnergyAccumulator / EnergyAccumulatorCnt);
+			Measures.ApparentEnergy 	   += (ApparentEnergyAccumulator / EnergyAccumulatorCnt);
+			Measures.ActiveEnergy 		   += (ActiveEnergyAccumulator / EnergyAccumulatorCnt);
+			Measures.ReactiveEnergy        += (ReactiveEnergyAccumulator / EnergyAccumulatorCnt);
 			Measures.PartialApparentEnergy += (ApparentEnergyAccumulator / EnergyAccumulatorCnt);
-			Measures.PartialActiveEnergy += (ActiveEnergyAccumulator / EnergyAccumulatorCnt);
+			Measures.PartialActiveEnergy   += (ActiveEnergyAccumulator / EnergyAccumulatorCnt);
 			Measures.PartialReactiveEnergy += (ReactiveEnergyAccumulator / EnergyAccumulatorCnt);
-			DBG("");
-			DBG("Energia apparente: " + String(Measures.ApparentEnergy, 3) + "VAh");
-			DBG("Energia attiva: " + String(Measures.ActiveEnergy, 3) + "Wh");
-			DBG("Energia reattiva: " + String(Measures.ReactiveEnergy, 3) + "VArh");
-			DBG("");
 		}
 		ApparentEnergyAccumulator = 0.0;
-		ActiveEnergyAccumulator = 0.0;
+		ActiveEnergyAccumulator   = 0.0;
 		ReactiveEnergyAccumulator = 0.0;
-		EnergyAccumulatorCnt = 0;
+		EnergyAccumulatorCnt      = 0;
 	}
 	
 }

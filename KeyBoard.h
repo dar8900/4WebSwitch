@@ -7,6 +7,7 @@ typedef enum
 {
 	B_UP = 0,
 	B_DOWN,
+	B_LEFT,
 	B_OK,
 	NO_PRESS
 }BUTTONS;

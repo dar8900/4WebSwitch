@@ -19,7 +19,7 @@
 #ifdef NODE_MCU
 typedef enum
 {
-	DATAPIN         = 12,
+	DATAPIN         = 15,
 	CLOCKPIN 	    = 10,
 	LATCHPIN 	    =  9,
 	OUTPUTENABLEPIN =  2,

@@ -13,6 +13,7 @@ ALARM_S Alarms[MAX_ALARM] =
 	{"Power factor"		, 	 -0.980,		0.980, 	 &Measures.PowerFactor	    ,    false, 	false,		0, 	NO_THR, 	 "PF sotto soglia"			,    "PF sopra soglia"			},
 };
 
+bool AlarmActive;
 
 static void ControlAlarmsThr()
 {
@@ -21,6 +22,8 @@ static void ControlAlarmsThr()
 	for(AlarmIndex = 0; AlarmIndex < MAX_ALARM; AlarmIndex++)
 	{
 		ActualMeasure = (float)*Alarms[AlarmIndex].AssociatedMeasure;
+		if(AlarmIndex == PF && ActualMeasure == INVALID_PF_VALUE)
+			continue;
 		if(Alarms[AlarmIndex].IsEnabled)
 		{
 			if(!Alarms[AlarmIndex].IsActive)
@@ -47,16 +50,27 @@ static void ControlAlarmsThr()
 				}
 			}
 		}
+		else
+		{
+			Alarms[AlarmIndex].IsActive = false;
+			Alarms[AlarmIndex].WichThr = NO_THR;
+		}
 	}
 }
 
-bool CheckAlarms()
+static bool CheckAlarms()
 {
 	int i = 0;
-	ControlAlarmsThr();
 	for(i = 0; i < MAX_ALARM; i++)
 	{
 		if(Alarms[i].IsActive)
 			return true;
 	}
 }
+
+void TaskAlarm()
+{
+	ControlAlarmsThr();
+	AlarmActive = CheckAlarms();
+}
+

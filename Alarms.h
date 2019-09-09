@@ -34,4 +34,9 @@ typedef struct
 	const char *OverThrAlarmMessage;
 }ALARM_S;
 
+extern bool AlarmActive;
+
+
+void TaskAlarm(void);
+
 #endif
