@@ -10,6 +10,7 @@
 #include "WifiIcons.h"
 
 // #define TEST_DISPLAY	
+#define BG_COLOR			TFT_BLACK
 
 #define TOP_POS				 0
 #define BOTTOM_POS(Str)		(Display.height() - Display.fontHeight())
@@ -29,6 +30,13 @@ enum
 	CHANGE_RELE_STATUS_ITEM = 0,
 	CHANGE_PAGE_ITEM,
 	MAX_RELE_PAGE_ITEMS
+};
+
+enum
+{
+	RESET_SELECTION = 0,
+	PAGE_RESET_SEL,
+	MAX_RESET_PAGE_ITEMS
 };
 
 const unsigned char *WifiIcons[] = 
@@ -97,38 +105,64 @@ const REFORMAT ReformatTab[] =
 };
 
 
-
-const char *ResetTitle[] = 
+const RESET_S Reset[MAX_RESET_ITEMS] = 
 {
-	"Reset energie",
-	"Reset energie parziali",
-	"Reset max e min",
-	"Reset medie",
-	"Restart switch"
+	{"Reset energie"		 ,		ResetTotalEnergy  },
+	{"Reset energie parziali",      ResetPartialEnergy},
+	{"Reset max e min"		 ,      ResetMaxMin       },
+	{"Reset medie"	   	     ,      ResetAvg          },
+	{"Restart switch"		 ,      ResetMcu          },
 };
 
 
-uint8_t 	ActualPage = MAIN_PAGE;
+static uint8_t 	ButtonPress;
+static bool 	SelPageSelected;
+static uint8_t 	ActualPage = MAIN_PAGE;
+static bool     RefreshBottomBar = true, PageChanged = false;
+
+static uint8_t 	MeasurePageSelection = LINE_MEASURES;
+static String   MeasurePageNumber = "";
+static bool 	MeasurePageChanged = false;
+
+static uint8_t 	RelePageItemSel;
+static uint8_t 	ReleIndex;
+static bool     RefreshReleChange = false;
+
+static uint8_t  ResetOrPage;
+static uint8_t  ResetItem = RESET_ENERGIES;
+static bool     RefreshResetItem = false;
 
 
-uint8_t 	MeasurePageSelection = LINE_MEASURES;
-String      MeasurePageNumber = "";
 
-uint8_t 	RelePageItemSel;
-uint8_t 	ReleIndex;
 
-uint8_t 	ButtonPress;
-bool 		SelPageSelected;
-
-static bool RefreshBottomBar = true, PageChanged = false, MeasurePageChanged = false, RefreshReleChange = false;
 
 void DisplayInit()
 {
 	Display.init();
 	Display.setRotation(3);
-	Display.fillScreen(TFT_BLACK);  
+	Display.fillScreen(BG_COLOR);  
 }
 
+static void ClearScreen(bool FullScreen)
+{
+	int Ypos;
+	if(FullScreen)
+		Ypos = 0;
+	else
+		Ypos = 14;			
+	Display.fillRect( 0,  Ypos,  Display.width(),  Display.height() - Ypos , BG_COLOR);
+}
+
+void DrawPopUp(const char *Text, uint16_t Delay)
+{
+	String TextStr = String(Text);
+	ClearScreen(false);
+	Display.setFreeFont(FMB18);
+	Display.drawRoundRect(0, 14, Display.width(), Display.height() - 14, 2, TFT_WHITE);
+	Display.drawString(TextStr, CENTER_POS(TextStr), (Display.height() - Display.fontHeight())/2, TFT_WHITE);
+	delay(Delay);
+	ClearScreen(false);
+}
 
 // Nome dello strumento, v FW, sotto ora data e icone varie
 static void DrawTopInfoBar()
@@ -147,10 +181,12 @@ static void DrawPageChange(int8_t Page, bool Selected)
 	int32_t XPos = CENTER_POS(DisplayPages[Page].PageName), YPos = BOTTOM_POS(DisplayPages[Page].PageName);
 	
 	Display.setFreeFont(FMB9);	
-	Display.fillRect( 0,  Display.height() - Display.fontHeight() - 4,  Display.width(),  Display.height() , TFT_BLACK);
+	Display.fillRect( 0,  Display.height() - Display.fontHeight() - 4,  Display.width(),  Display.height() , BG_COLOR);
 	Display.drawString((String)DisplayPages[Page].PageName, XPos, YPos);
 	if(Selected)
 		Display.drawRoundRect( XPos - 2,  YPos - 2,  Display.textWidth((String)DisplayPages[Page].PageName) + 4,  Display.fontHeight() + 2,  2,  TFT_WHITE);
+	else
+		Display.drawRoundRect( XPos - 2,  YPos - 2,  Display.textWidth((String)DisplayPages[Page].PageName) + 4,  Display.fontHeight() + 2,  2,  BG_COLOR);
 	Display.drawString((String)DisplayPages[Page].PageName, XPos, YPos);
 }
 
@@ -239,25 +275,10 @@ static uint8_t SearchRange(double Value)
 	return i;
 }
 
-static void FormatAndPrintMeasure(double Measure, int Line, String Udm)
+static void FormatAndPrintMeasure(uint8_t MeasurePageNumber)
 {
 	uint8_t Range = 0;
 	String MeasureToPrint = "", UdmRF = "";
-	Range = SearchRange(Measure);
-	Measure *= ReformatTab[Range].RefactorValue;
-	MeasureToPrint = String(Measure, 3);
-	UdmRF += String(ReformatTab[Range].Odg) + Udm;
-	Display.setFreeFont(FMB18);
-	Display.drawString(MeasureToPrint, CENTER_POS(MeasureToPrint), 34 + (Line * (Display.fontHeight() + 10)));
-	Display.setFreeFont(FM9);
-	Display.drawString(UdmRF, RIGHT_POS(UdmRF), 26 + (Line * (38)));	
-}
-
-
-static void DrawMeasurePage()
-{
-	SelPageSelected = true;
-
 	for(int Line = 0; Line < MAX_MEASURE_LINE; Line++)
 	{
 		double ActualMeasure = 0.0;
@@ -265,24 +286,38 @@ static void DrawMeasurePage()
 
 		if(Line == 0)
 		{
-			ActualMeasure = *MeasuresPage[MeasurePageSelection].FirstLineMeasure;
-			Udm = String(MeasuresPage[MeasurePageSelection].UdmFirstLine);
+			ActualMeasure = *MeasuresPage[MeasurePageNumber].FirstLineMeasure;
+			Udm = String(MeasuresPage[MeasurePageNumber].UdmFirstLine);
 		}
 		else if(Line == 1)
 		{
-			ActualMeasure = *MeasuresPage[MeasurePageSelection].SecondLineMeasure;
-			Udm = String(MeasuresPage[MeasurePageSelection].UdmSecondLine);
+			ActualMeasure = *MeasuresPage[MeasurePageNumber].SecondLineMeasure;
+			Udm = String(MeasuresPage[MeasurePageNumber].UdmSecondLine);
 		}
 		else
 		{
-			ActualMeasure = *MeasuresPage[MeasurePageSelection].ThirdLineMeasure;
-			Udm = String(MeasuresPage[MeasurePageSelection].UdmThirdLine);
+			ActualMeasure = *MeasuresPage[MeasurePageNumber].ThirdLineMeasure;
+			Udm = String(MeasuresPage[MeasurePageNumber].UdmThirdLine);
 		}
-		FormatAndPrintMeasure(ActualMeasure, Line, Udm);
+		Range = SearchRange(ActualMeasure);
+		ActualMeasure *= ReformatTab[Range].RefactorValue;
+		MeasureToPrint = String(ActualMeasure, 3);
+		UdmRF += String(ReformatTab[Range].Odg) + Udm;
+		Display.setFreeFont(FMB18);
+		Display.drawString(MeasureToPrint, CENTER_POS(MeasureToPrint), 34 + (Line * (Display.fontHeight() + 10)));
+		Display.setFreeFont(FM9);
+		Display.drawString(UdmRF, RIGHT_POS(UdmRF), 26 + (Line * (38)));	
 	}
 	Display.setFreeFont(FM9);
-	MeasurePageNumber = String(MeasurePageSelection + 1) + "/" + String(MAX_MEASURE_PAGES);
-	Display.drawString(MeasurePageNumber, CENTER_POS(MeasurePageNumber), 210);
+	String MeasurePageNumberStr = String(MeasurePageNumber + 1) + "/" + String(MAX_MEASURE_PAGES);
+	Display.drawString(MeasurePageNumberStr, CENTER_POS(MeasurePageNumberStr), 210);
+}
+
+
+static void DrawMeasurePage()
+{
+	SelPageSelected = true;
+	FormatAndPrintMeasure(MeasurePageSelection);
 	ButtonPress = CheckButtons();
 	switch(ButtonPress)
 	{
@@ -326,7 +361,7 @@ static void DrawMeasurePage()
 	{
 		RefreshBottomBar = true;
 		MeasurePageChanged = false;
-		Display.fillRect( 0,  14,  Display.width(),  Display.height() - 14 , TFT_BLACK);
+		ClearScreen(false);
 	}
 }
 
@@ -335,19 +370,19 @@ static void RefreshReleChangeStatus(uint8_t ReleIndex, bool ChangeStatusSel, boo
 	String ReleName = "Presa " + String(ReleIndex + 1), Status = "SPENTA";
 	if(*RefreshReleChange)
 	{
-		Display.fillRoundRect( 0,  64,  Display.width(),  140,  2,  TFT_BLACK);
+		Display.fillRoundRect( 0,  64,  Display.width(),  140,  2,  BG_COLOR);
 		*RefreshReleChange = false;
 	}
 	ChangeStatusSel = !ChangeStatusSel;
 	if(ChangeStatusSel)
 		Display.drawRoundRect( 0,  64,  Display.width(),  140,  2,  TFT_WHITE);
 	else
-		Display.drawRoundRect( 0,  64,  Display.width(),  140,  2,  TFT_BLACK);
+		Display.drawRoundRect( 0,  64,  Display.width(),  140,  2,  BG_COLOR);
 	Display.setFreeFont(FMB24);
 	Display.drawString(ReleName, CENTER_POS(ReleName), 68);
 	if(Rele.getReleStatus(ReleIndex) == STATUS_ON)
 	{
-		Display.setTextColor(TFT_BLACK, TFT_GREEN);
+		Display.setTextColor(BG_COLOR, TFT_GREEN);
 		Status = "ACCESA";
 	}
 	else
@@ -535,42 +570,99 @@ static void DrawAlarmStatusPage()
 
 }
 
+
+static void RefreshResetList(uint8_t ResetItem, bool ResetSelected, bool *RefreshResetItem)
+{
+	String ResetItemName = String(Reset[ResetItem].ResetTitle), ResetNumber = "";
+	ResetSelected = !ResetSelected;
+	if(*RefreshResetItem)
+	{
+		ClearScreen(false);
+		*RefreshResetItem = false;
+	}
+	if(ResetSelected)
+		Display.drawRoundRect( 0,  102,  Display.width(),  122,  2,  TFT_WHITE);
+	else
+		Display.drawRoundRect( 0,  102,  Display.width(),  122,  2,  BG_COLOR);
+	Display.setFreeFont(FMB24);
+	Display.drawString(ResetItemName, CENTER_POS(ResetItemName), 104);
+	Display.setFreeFont(FM9);
+	ResetNumber = String(ResetItem + 1) + "/" + String(MAX_RESET_ITEMS);
+	Display.drawString(ResetNumber, CENTER_POS(ResetNumber), 210);
+}
+
+
 static void DrawResetPage()
 {
 	SelPageSelected = true;
+	RefreshResetList(ResetItem, SelPageSelected, &RefreshResetItem);
 	ButtonPress = CheckButtons();
 	switch(ButtonPress)
 	{
 		case B_UP:
-			if(DisplayPages[ActualPage].PageToChange > 0)
+			if(ResetOrPage == RESET_SELECTION)
 			{
-				DisplayPages[ActualPage].PageToChange--;
+				if(ResetItem > RESET_ENERGIES)
+					ResetItem--;
+				else
+					ResetItem = MAX_RESET_ITEMS - 1;
+				RefreshResetItem = true;
 			}
 			else
-				DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
-			RefreshBottomBar = true;
+			{
+				if(DisplayPages[ActualPage].PageToChange > 0)
+				{
+					DisplayPages[ActualPage].PageToChange--;
+				}
+				else
+					DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
+				RefreshBottomBar = true;
+			}
 			break;
 		case B_DOWN:
-			if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
+			if(ResetOrPage == RESET_SELECTION)
 			{
-				DisplayPages[ActualPage].PageToChange++;
+				if(ResetItem < MAX_RESET_ITEMS - 1)
+					ResetItem++;
+				else
+					ResetItem = RESET_ENERGIES;
+				RefreshResetItem = true;
 			}
 			else
-				DisplayPages[ActualPage].PageToChange = 0;
-			RefreshBottomBar = true;
+			{
+				if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
+				{
+					DisplayPages[ActualPage].PageToChange++;
+				}
+				else
+					DisplayPages[ActualPage].PageToChange = 0;
+				RefreshBottomBar = true;
+			}
 			break;
 		case B_LEFT:
-			if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
-			{
-				DisplayPages[ActualPage].PageToChange++;
-			}
+			if(ResetOrPage < MAX_RESET_PAGE_ITEMS - 1)
+				ResetOrPage++;
 			else
-				DisplayPages[ActualPage].PageToChange = 0;
-			RefreshBottomBar = true;
+				ResetOrPage = 0;
+			if(ResetOrPage == RESET_SELECTION)
+				SelPageSelected = false;
+			else
+				SelPageSelected = true;
 			break;				
 		case B_OK:
-			ActualPage = DisplayPages[ActualPage].PageToChange;
-			PageChanged = true;
+			if(ResetOrPage == RESET_SELECTION)
+			{
+				Reset[ResetItem].ResetFunc();
+				DrawPopUp("Reset riuscito", 2000);
+				RefreshResetItem = true;
+			}
+			else
+			{
+				ResetItem = RESET_ENERGIES;
+				ResetOrPage = RESET_SELECTION;
+				ActualPage = DisplayPages[ActualPage].PageToChange;
+				PageChanged = true;
+			}
 			break;
 		default:
 			break;
@@ -582,7 +674,8 @@ void TaskDisplay()
 {
 	if(PageChanged)
 	{
-		Display.fillScreen(TFT_BLACK); 
+		// Display.fillScreen(BG_COLOR); 
+		ClearScreen(true);
 		PageChanged = false;
 		RefreshBottomBar = true;
 	}		

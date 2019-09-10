@@ -50,7 +50,7 @@ typedef enum
 	N_RELE
 }RELE_NUMBER;
 
-
+void ResetMcu(void);
 
 
 #endif

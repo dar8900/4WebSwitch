@@ -9,12 +9,23 @@
 static SHIFTY_REG ShiftReg;
 RELE_LIB   Rele;
 
+RELE_INFO_S ReleStatistics[N_RELE];
+Chrono PowerOnTimeTimer;
+
 void ReleInit()
 {
 	Rele.begin(N_RELE);
 	ShiftReg.begin(DATAPIN, CLOCKPIN, LATCHPIN, OUTPUTENABLEPIN, CLEARREGPIN, N_RELE, N_OF_SHIFT_REG);	
+
 	TurnAllRele(STATUS_OFF);
-	ShiftReg.loadAllExit(STATUS_OFF);	
+	ShiftReg.loadAllExit(STATUS_OFF);
+#ifdef TEST_RELE_EXIT	
+	for(int ReleIndex = 0; ReleIndex < N_RELE * 2; ReleIndex++)
+	{
+		ToggleRele(ReleIndex % N_RELE);
+		delay(150);
+	}
+#endif
 }
 
 
@@ -58,3 +69,23 @@ void ToggleRele(uint8_t WichRele)
 	}
 }
 
+void RefreshReleStatistics()
+{
+	for(int ReleIndex = 0; ReleIndex < N_RELE; ReleIndex++)
+	{
+		uint8_t ActualStatus = Rele.getReleStatus(ReleIndex);
+		if(ReleStatistics[ReleIndex].OldStatus != ActualStatus)
+		{
+			ReleStatistics[ReleIndex].OldStatus = ActualStatus;
+			if(ActualStatus == STATUS_ON)
+			{
+				ReleStatistics[ReleIndex].NSwitches++;
+			}
+		}
+		if(ActualStatus == STATUS_ON)
+		{
+			if(PowerOnTimeTimer.hasPassed(1000, true))
+				ReleStatistics[ReleIndex].PowerOnTime++;
+		}
+	}
+}

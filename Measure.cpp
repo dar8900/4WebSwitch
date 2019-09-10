@@ -344,23 +344,47 @@ static void CalcEnergy()
 	
 }
 
-void ResetEnergy(bool TotalOrPartial)
+void ResetTotalEnergy()
 {
-	if(TotalOrPartial == RESET_TOTAL_ENERGIES)
-	{
-		Measures.ApparentEnergy = 0.0;
-		Measures.ActiveEnergy = 0.0;
-		Measures.ReactiveEnergy = 0.0;
-		Measures.PartialApparentEnergy = 0.0; 
-		Measures.PartialActiveEnergy = 0.0;
-		Measures.PartialReactiveEnergy = 0.0; 
-	}
-	else
-	{
-		Measures.PartialApparentEnergy = 0.0; 
-		Measures.PartialActiveEnergy = 0.0;
-		Measures.PartialReactiveEnergy = 0.0; 		
-	}
+	Measures.ApparentEnergy = 0.0;
+	Measures.ActiveEnergy = 0.0;
+	Measures.ReactiveEnergy = 0.0;
+	Measures.PartialApparentEnergy = 0.0; 
+	Measures.PartialActiveEnergy = 0.0;
+	Measures.PartialReactiveEnergy = 0.0; 
+}
+
+void ResetPartialEnergy()
+{
+	Measures.PartialApparentEnergy = 0.0; 
+	Measures.PartialActiveEnergy = 0.0;
+	Measures.PartialReactiveEnergy = 0.0; 
+}
+
+void ResetMaxMin()
+{
+	Measures.MaxMinAvg.MaxCurrent       = 0.0;
+	Measures.MaxMinAvg.MinCurrent       = 0.0;
+	Measures.MaxMinAvg.MaxVoltage       = 0.0;
+	Measures.MaxMinAvg.MinVoltage       = 0.0;
+	Measures.MaxMinAvg.MaxActivePower   = 0.0;
+	Measures.MaxMinAvg.MinActivePower   = 0.0;
+	Measures.MaxMinAvg.MaxReactivePower = 0.0;
+	Measures.MaxMinAvg.MinReactivePower = 0.0;
+	Measures.MaxMinAvg.MaxApparentPower = 0.0;
+	Measures.MaxMinAvg.MinApparentPower = 0.0;
+	Measures.MaxMinAvg.MaxPowerFactor   = 0.0;
+	Measures.MaxMinAvg.MinPowerFactor   = 0.0;
+}
+
+void ResetAvg()
+{
+	Measures.MaxMinAvg.CurrentAvg       = 0.0;
+	Measures.MaxMinAvg.VoltageAvg       = 0.0;
+	Measures.MaxMinAvg.ActivePowerAvg   = 0.0;
+	Measures.MaxMinAvg.ReactivePowerAvg = 0.0;
+	Measures.MaxMinAvg.ApparentPowerAvg = 0.0;
+	Measures.MaxMinAvg.PowerFactorAvg   = 0.0;
 }
 
 void TaskMeasure()

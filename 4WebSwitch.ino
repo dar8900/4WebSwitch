@@ -11,6 +11,10 @@
 // #define TASK_MEASURE
 #define TASK_WEB
 
+void ResetMcu()
+{
+	ESP.restart();
+}
 
 void setup()
 {
@@ -48,4 +52,6 @@ void loop()
 #ifdef TASK_KEYBOARD
 	TaskKeyTest();
 #endif
+
+	RefreshReleStatistics();
 }

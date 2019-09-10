@@ -5,6 +5,7 @@
 #include "Web.h"
 #include "Rele.h"
 #include "Measure.h"
+#include "Display.h"
 #include <ESP8266WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
@@ -299,13 +300,14 @@ void WifiInit()
 		
 		// server.begin();
 		timeClient.begin();
-		DBG("IP: " + IPAddr());
 		delay(1000);
 		if(CheckWifiCon())
 		{
 #ifdef ALEXA			
 			AlexaInit();
 #endif			
+			String IP_popup = "IP: " + IPAddr();
+			DrawPopUp(IP_popup.c_str(), 1500);
 		}
 		GetTime();
 		WifiSignal = GetWifiSignalPower();

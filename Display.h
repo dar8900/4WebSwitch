@@ -58,7 +58,25 @@ typedef enum
 	
 }MEASURES_ITEM;
 
+
+typedef struct
+{
+	const char *ResetTitle;
+	void (*ResetFunc)(void);
+}RESET_S;
+
+typedef enum
+{
+	RESET_ENERGIES = 0,
+	RESET_PAR_ENERGIES,
+	RESET_MAX_MIN,
+	RESET_AVG,
+	RESTART_MCU,
+	MAX_RESET_ITEMS	
+}RESET_ITEMS;
+
 void DisplayInit(void);
+void DrawPopUp(const char *Text, uint16_t Delay);
 
 void TaskDisplay(void);
 

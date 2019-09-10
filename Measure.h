@@ -52,7 +52,10 @@ typedef struct
 extern GENERAL_MEASURES Measures;
 
 void AnalogBegin(void);
-void ResetEnergy(bool TotalOrPartial);
+void ResetTotalEnergy(void);
+void ResetPartialEnergy(void);
+void ResetMaxMin(void);
+void ResetAvg(void);
 void TaskMeasure(void);
 
 
