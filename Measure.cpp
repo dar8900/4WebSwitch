@@ -235,7 +235,7 @@ void AnalogBegin()
 	AnalogBoard.initialize();
 	AnalogBoard.setMode(ADS1115_MODE_CONTINUOUS);
 	AnalogBoard.setRate(ADS1115_RATE_860);
-	AnalogBoard.setGain(ADS1115_MV_1P024);
+	AnalogBoard.setGain(ADS1115_MV_2P048);
 	// AnalogBoard.setMultiplexer(ADS1115_MUX_P0_NG); 
 #else
 	CalcSimCurrentVoltage(true);

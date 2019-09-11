@@ -240,24 +240,24 @@ int16_t ADS1115::getConversionP3GND() {
 double ADS1115::getVolts(bool triggerAndPoll) {
   switch (pgaMode) { 
     case ADS1115_PGA_6P144:
-      return (getConversion(triggerAndPoll) * ADS1115_MV_6P144);
+      return (getConversion(triggerAndPoll) * ADS1115_MV_6P144 / 1000.0);
       break;    
     case ADS1115_PGA_4P096:
-      return (getConversion(triggerAndPoll) * ADS1115_MV_4P096);
+      return (getConversion(triggerAndPoll) * ADS1115_MV_4P096 / 1000.0);
       break;             
     case ADS1115_PGA_2P048:    
-      return (getConversion(triggerAndPoll) * ADS1115_MV_2P048);
+      return (getConversion(triggerAndPoll) * ADS1115_MV_2P048 / 1000.0);
       break;       
     case ADS1115_PGA_1P024:     
-      return (getConversion(triggerAndPoll) * ADS1115_MV_1P024);
+      return (getConversion(triggerAndPoll) * ADS1115_MV_1P024 / 1000.0);
       break;       
     case ADS1115_PGA_0P512:      
-      return (getConversion(triggerAndPoll) * ADS1115_MV_0P512);
+      return (getConversion(triggerAndPoll) * ADS1115_MV_0P512 / 1000.0);
       break;       
     case ADS1115_PGA_0P256:           
     case ADS1115_PGA_0P256B:          
     case ADS1115_PGA_0P256C:      
-      return (getConversion(triggerAndPoll) * ADS1115_MV_0P256);
+      return (getConversion(triggerAndPoll) * ADS1115_MV_0P256 / 1000.0);
       break;       
   }
 }
