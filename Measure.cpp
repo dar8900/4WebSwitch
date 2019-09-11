@@ -12,10 +12,10 @@
 #define SIM_V_PEAK(V)	       (V * sqrt(2))
 #define SIM_I_PEAK(I)	       (I * sqrt(2))
 
-#define SIM_V_DELAY(Grad)      ((Grad * M_PI)/180)
-#define SIM_I_DELAY(Grad)	   ((Grad * M_PI)/180)  
+#define SIM_V_DELAY(Grad)      ((Grad * DEG_TO_RAD)
+#define SIM_I_DELAY(Grad)	   ((Grad * DEG_TO_RAD)  
 
-#define SIM_FREQ(Frq)   	   (2 * M_PI * (Frq))
+#define SIM_FREQ(Frq)   	   (2 * PI * (Frq))
 
 #define DFLT_PEAK_I			    5.0
 #define DFLT_DELAY_I		    0.0

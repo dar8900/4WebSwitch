@@ -8,6 +8,7 @@
 #include <SPI.h>
 #include "Free_Fonts.h"
 #include "WifiIcons.h"
+#include "Alarms.h"
 
 // #define TEST_DISPLAY	
 #define BG_COLOR			TFT_BLACK
@@ -147,10 +148,12 @@ static void ClearScreen(bool FullScreen)
 {
 	int Ypos;
 	if(FullScreen)
-		Ypos = 0;
+		Display.fillScreen(BG_COLOR); 
 	else
+	{
 		Ypos = 14;			
-	Display.fillRect( 0,  Ypos,  Display.width(),  Display.height() - Ypos , BG_COLOR);
+		Display.fillRect( 0,  Ypos,  Display.width(),  Display.height() - Ypos , BG_COLOR);
+	}
 }
 
 void DrawPopUp(const char *Text, uint16_t Delay)

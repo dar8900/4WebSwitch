@@ -6,7 +6,7 @@
 
 #define TEST_RELE_EXIT
 
-static SHIFTY_REG ShiftReg;
+SHIFTY_REG ShiftReg;
 RELE_LIB   Rele;
 
 RELE_INFO_S ReleStatistics[N_RELE];
@@ -41,6 +41,17 @@ void TurnOffRele(uint8_t WichRele)
 	Rele.setReleStatus(WichRele, STATUS_OFF);
 	ShiftReg.setSingleExit(WichRele, STATUS_OFF);
 	ShiftReg.loadAllExit();	
+}
+
+void SwichReleStatus(uint8_t WichRele, uint8_t Status)
+{
+	if(Status != STATUS_OFF && Status != STATUS_ON)
+	{
+		return;
+	}
+	Rele.setReleStatus(WichRele, Status);
+	ShiftReg.setSingleExit(WichRele, Status);
+	ShiftReg.loadAllExit();		
 }
 
 void TurnAllRele(uint8_t Status)

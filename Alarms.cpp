@@ -2,16 +2,48 @@
 #include "Alarms.h"
 #include "Measure.h"
 #include "Display.h"
+#include "Rele.h"
 
 ALARM_S Alarms[MAX_ALARM] = 
 {
-	{"Corrente"         , 		0.0,		 14.0, 	 &Measures.CurrentRMS	    ,    false, 	false,		0, 	NO_THR, 	 "Sotto corrente"           ,    "Sovra corrente"           },
-	{"Tensione"         , 		0.0,		230.0, 	 &Measures.VoltageRMS	    ,    false, 	false,		0, 	NO_THR, 	 "Sotto tensione"			,    "Sovra tensione"			},
-	{"Potenza attiva"   , 		0.0,	   2000.0, 	 &Measures.ActivePower	    ,    false, 	false,		0, 	NO_THR, 	 "Potenza att. sotto soglia",    "Potenza att. sopra soglia"},
-	{"Potenza reattiva" , 	  -50.0,		 50.0, 	 &Measures.ReactivePower	,    false, 	false,		0, 	NO_THR, 	 "Potenza rea. sotto soglia",    "Potenza rea. sopra soglia"},
-	{"Potenza apparente", 		0.0,	   3000.0, 	 &Measures.ApparentPower	,    false, 	false,		0, 	NO_THR, 	 "Potenza app. sotto soglia",    "Potenza app. sopra soglia"},
-	{"Power factor"		, 	 -0.980,		0.980, 	 &Measures.PowerFactor	    ,    false, 	false,		0, 	NO_THR, 	 "PF sotto soglia"			,    "PF sopra soglia"			},
+	{	0.0,		 14.0, 	 &Measures.CurrentRMS	  ,    false, 	false,	 false ,	0, 	NO_THR},
+	{	0.0,		230.0, 	 &Measures.VoltageRMS	  ,    false, 	false,	 false ,	0, 	NO_THR},
+	{	0.0,	   2000.0, 	 &Measures.ActivePower	  ,    false, 	false,	 false ,	0, 	NO_THR},
+	{ -50.0,		 50.0, 	 &Measures.ReactivePower  ,    false, 	false,	 false ,	0, 	NO_THR},
+	{	0.0,	   3000.0, 	 &Measures.ApparentPower  ,    false, 	false,	 false ,	0, 	NO_THR},
+	{-0.980,		0.980, 	 &Measures.PowerFactor	  ,    false, 	false,	 false ,	0, 	NO_THR},
 };
+
+const char *AlarmsName[MAX_ALARM] = 
+{
+	"Corrente"         ,
+	"Tensione"         ,
+	"Potenza attiva"   ,
+	"Potenza reattiva" ,
+	"Potenza apparente",
+	"Power factor"	   ,
+};
+
+const char *UnderThrAlarmMessage[MAX_ALARM] = 
+{
+	"Sotto corrente"           ,
+	"Sotto tensione"		   ,
+	"Potenza att. sotto soglia",
+	"Potenza rea. sotto soglia",
+	"Potenza app. sotto soglia",
+	"PF sotto soglia"		   ,
+};
+
+const char *OverThrAlarmMessage[MAX_ALARM] = 
+{
+	"Sovra corrente"           ,
+	"Sovra tensione"		   ,
+	"Potenza att. sopra soglia",
+	"Potenza rea. sopra soglia",
+	"Potenza app. sopra soglia",
+	"PF sopra soglia"		   ,
+};
+
 
 bool AlarmActive;
 
@@ -58,6 +90,22 @@ static void ControlAlarmsThr()
 	}
 }
 
+
+static void AlarmsReleDisconnect()
+{
+	for(int AlarmIndex = 0; AlarmIndex < MAX_ALARM; AlarmIndex++)
+	{
+		if(Alarms[AlarmIndex].EnableDisconnection)
+		{
+			if(Alarms[AlarmIndex].IsActive && Alarms[AlarmIndex].WichThr == OVER_THR)
+			{
+				TurnAllRele(STATUS_OFF);
+			}
+		}
+	}
+}
+
+
 static bool CheckAlarms()
 {
 	int i = 0;
@@ -71,6 +119,7 @@ static bool CheckAlarms()
 void TaskAlarm()
 {
 	ControlAlarmsThr();
+	AlarmsReleDisconnect();
 	AlarmActive = CheckAlarms();
 }
 

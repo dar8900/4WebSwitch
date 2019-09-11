@@ -22,20 +22,21 @@ enum
 
 typedef struct
 {
-	const char *AlarmName;
 	float      LowThr;
 	float	   HighThr;
 	double 	   *AssociatedMeasure;
 	bool 	   IsActive;
 	bool 	   IsEnabled;
+	bool 	   EnableDisconnection;
 	uint32_t   Occurences;
 	uint8_t    WichThr;
-	const char *UnderThrAlarmMessage;
-	const char *OverThrAlarmMessage;
 }ALARM_S;
 
 extern bool AlarmActive;
-
+extern ALARM_S Alarms[MAX_ALARM];
+extern const char *AlarmsName[MAX_ALARM];
+extern const char *UnderThrAlarmMessage[MAX_ALARM];
+extern const char *OverThrAlarmMessage[MAX_ALARM];
 
 void TaskAlarm(void);
 
