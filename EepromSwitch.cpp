@@ -4,14 +4,16 @@
 #include "EepromSwitch.h"
 #include <EEPROM.h>
 
+#define NODE_MCU_EEPROM_SIZE	       512
 
-#define MEASURES_SIZE					 8
+#define MEASURES_SIZE					 sizeof(double)
 #define RELE_STATUS_SIZE			     1
 #define RELE_OCCUR_SIZE					 2
-#define RELE_POWERON_SIZE				 4
+#define RELE_POWERON_SIZE				 sizeof(int)
 
-#define ENERGIES_START_ADDR			     0
-#define MAX_MIN_AVG_START_ADDR    	    48
+#define FIRST_CHECK_VAR_ADDR		     0
+#define ENERGIES_START_ADDR			     1
+#define MAX_MIN_AVG_START_ADDR    	    51
 
 #define RELE_STATUS_START_ADDR    	   200
 #define RELE_STAT_START_ADDR 		   204
@@ -21,6 +23,8 @@
 #define TIMER_EEPROM_SAVE(Min)         (Min * 60)
 
 Chrono  EepromSaveTimer(Chrono::SECONDS);
+
+static bool IsEmpty = false;
 
 static void SaveEnergies()
 {
@@ -204,19 +208,38 @@ static void LoadReleStatistics()
 	EEPROM.get(EepromAddrInit, ReleStatistics[RELE_4].PowerOnTime);	
 }
 
+static void CheckFirstGo()
+{
+	if(EEPROM.read(FIRST_CHECK_VAR_ADDR) == 1)
+		return;
+	else
+		IsEmpty = true;
+	DBG("Memoria non inizializzata");
+	delay(1000);
+	for(int i = 1; i < NODE_MCU_EEPROM_SIZE; i++)
+		EEPROM.write(i, 0);
+	EEPROM.write(FIRST_CHECK_VAR_ADDR, 1);
+	EEPROM.commit();
+	DBG("Memoria inizializzata e pronta");
+	delay(1000);	
+}
 
 void EepromInit()
 {
-	EEPROM.begin(512);
-	LoadEnergies();
-	LoadMaxMinAvg();
-	LoadReleSatus();
-	LoadReleStatistics();
+	EEPROM.begin(NODE_MCU_EEPROM_SIZE);
+	CheckFirstGo();
+	if(!IsEmpty)
+	{
+		LoadEnergies();
+		LoadMaxMinAvg();
+		LoadReleSatus();
+		LoadReleStatistics();
+	}
 }
 
 void TaskEeprom()
 {
-	if(EepromSaveTimer.hasPassed(TIMER_EEPROM_SAVE(5), true))
+	if(EepromSaveTimer.hasPassed(TIMER_EEPROM_SAVE(15), true))
 	{
 		SaveEnergies();
 		SaveMaxMinAvg();

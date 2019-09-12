@@ -4,6 +4,7 @@
 #include "Web.h"
 #include "KeyBoard.h"
 #include "Display.h"
+#include "EepromSwitch.h"
 #include "Alarms.h"
 
 #define TASK_DISPLAY
@@ -23,6 +24,7 @@ void setup()
 	Wire.begin(5, 4);
 #endif	
 	Serial.begin(115200);
+	EepromInit();
 	AnalogBegin();
 #ifdef TASK_DISPLAY	
 	DisplayInit();

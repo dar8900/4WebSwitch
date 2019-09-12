@@ -63,7 +63,7 @@ bool WifiConnected = false;
 uint8_t WifiSignal;
 
 
-NETWORK_LIST WifiList[MY_WIFI_LIST] = 
+NETWORK_LIST MyNetworksList[MY_WIFI_LIST] = 
 {
 	{"dario_idem"    , "dari9299"  },
 	{"DOOM_SLAYER"   , "dari9299"  },
@@ -143,14 +143,8 @@ static void GetTime()
 	GlobalTime.Hour = (uint8_t)((TimeInSecond / 3600) % 24);
 	GlobalTime.Minute = (uint8_t)((TimeInSecond / 60) % 60);
 	GlobalTime.Second = (uint8_t)(TimeInSecond % 60);
-	if(GlobalTime.Hour > 9)
-		Hour = String(GlobalTime.Hour);
-	else
-		Hour = "0" + String(GlobalTime.Hour);
-	if(GlobalTime.Minute > 9)
-		Minute = String(GlobalTime.Minute);
-	else
-		Minute = "0" + String(GlobalTime.Minute);	
+	GlobalTime.Hour > 9 ? Hour = String(GlobalTime.Hour) : Hour = "0" + String(GlobalTime.Hour);
+	GlobalTime.Minute > 9 ? Minute = String(GlobalTime.Minute):	Minute = "0" + String(GlobalTime.Minute);	
 	TimeFormatted = Hour + ":" + Minute;
 	DateFormatted = FormatDateFromWeb((time_t)TimeInSecond);
 	return;
@@ -172,71 +166,12 @@ static void AlexaInit()
 			if(strcmp(device_name, ReleID[ReleIndex]) == 0)
 			{
 				if(state)
-				{
-					if(Rele.getReleStatus(ReleIndex) == STATUS_OFF)
-						TurnOnRele(ReleIndex);					
-				}
+					SwichReleStatus(ReleIndex, STATUS_ON);				
 				else
-				{
-					if(Rele.getReleStatus(ReleIndex) == STATUS_ON)
-						TurnOffRele(ReleIndex);						
-				}
+					SwichReleStatus(ReleIndex, STATUS_OFF);						
 				break;				
 			}
 		}
-		// if (strcmp(device_name, ReleID[RELE_1]) == 0) 
-		// {
-			// if(state)
-			// {
-				// if(Rele.getReleStatus(RELE_1) == STATUS_OFF)
-					// TurnOnRele(RELE_1);					
-			// }
-			// else
-			// {
-				// if(Rele.getReleStatus(RELE_1) == STATUS_ON)
-					// TurnOffRele(RELE_1);						
-			// }
-		// } 
-		// else if (strcmp(device_name, ReleID[RELE_2]) == 0) 
-		// {
-			// if(state)
-			// {
-				// if(Rele.getReleStatus(RELE_2) == STATUS_OFF)
-					// TurnOnRele(RELE_2);					
-			// }
-			// else
-			// {
-				// if(Rele.getReleStatus(RELE_2) == STATUS_ON)
-					// TurnOffRele(RELE_2);						
-			// }
-		// }
-		// else if (strcmp(device_name, ReleID[RELE_3]) == 0)
-		// {
-			// if(state)
-			// {
-				// if(Rele.getReleStatus(RELE_3) == STATUS_OFF)
-					// TurnOnRele(RELE_3);					
-			// }
-			// else
-			// {
-				// if(Rele.getReleStatus(RELE_3) == STATUS_ON)
-					// TurnOffRele(RELE_3);						
-			// }
-		// } 
-		// else if (strcmp(device_name, ReleID[RELE_4]) == 0)
-		// {
-			// if(state)
-			// {
-				// if(Rele.getReleStatus(RELE_4) == STATUS_OFF)
-					// TurnOnRele(RELE_4);					
-			// }
-			// else
-			// {
-				// if(Rele.getReleStatus(RELE_4) == STATUS_ON)
-					// TurnOffRele(RELE_4);						
-			// }
-		// } 
-
 	});
 
 }
@@ -267,34 +202,37 @@ void WifiInit()
 	int DeviceFoundIndex = 0, MyDeviceList = 0;
 	bool MyDeviceFounded = false;
 	WiFi.mode(WIFI_STA);
-
 	DeviceFoundIndex = WiFi.scanNetworks();
 	ScanResult(DeviceFoundIndex);
-	for(DeviceFoundIndex = 0; DeviceFoundIndex < MAX_WIFI_DEVICE; DeviceFoundIndex++)
+	if(DeviceFoundIndex != 0)
 	{
-		MyDeviceFounded = false;
-		for(MyDeviceList = 0; MyDeviceList < MY_WIFI_LIST; MyDeviceList++)
+		for(DeviceFoundIndex = 0; DeviceFoundIndex < MAX_WIFI_DEVICE; DeviceFoundIndex++)
 		{
-			if(WifiDeviceList[DeviceFoundIndex].DeviceSSID == String(WifiList[MyDeviceList].SSID))
+			MyDeviceFounded = false;
+			for(MyDeviceList = 0; MyDeviceList < MY_WIFI_LIST; MyDeviceList++)
 			{
-				DBG(WifiDeviceList[DeviceFoundIndex].DeviceSSID);
-				MyDeviceFounded = true;
-				break;
+				if(WifiDeviceList[DeviceFoundIndex].DeviceSSID == String(MyNetworksList[MyDeviceList].SSID))
+				{
+					DBG(WifiDeviceList[DeviceFoundIndex].DeviceSSID);
+					MyDeviceFounded = true;
+					break;
+				}
 			}
+			if(MyDeviceFounded)
+				break;
 		}
-		if(MyDeviceFounded)
-			break;
 	}
 	
 	if(MyDeviceFounded)
 	{
-		WiFi.begin(WifiList[MyDeviceList].SSID, WifiList[MyDeviceList].Passwd);
+		WiFi.begin(MyNetworksList[MyDeviceList].SSID, MyNetworksList[MyDeviceList].Passwd);
 		Serial.print("Connecting...");
 		while (WiFi.status() != WL_CONNECTED)
 		{
-			delay(250);
+			delay(100);
 			Serial.print(".");
 		}
+		DBG("");
 		WiFi.hostname(HostName);
 		WiFi.setAutoReconnect(true);
 		

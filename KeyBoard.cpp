@@ -2,17 +2,18 @@
 #include "KeyBoard.h"
 
 #define ADC_CONV_TO_V(AdcVal)  	((AdcVal * 3.3) / 1024)	
-
+#define ADC_KEY_SAMPLE			10
 
 Chrono CheckKeyboard;
 float AdcToVolt = 0.0;
 
 uint8_t CheckButtons()
 {
-	uint16_t AdcVal = 0;
+	uint32_t AdcVal = 0;
 	AdcToVolt = 0.0;
-	AdcVal = analogRead(A0);
-	AdcToVolt = ADC_CONV_TO_V(AdcVal);
+	for(int i = 0; i < ADC_KEY_SAMPLE; i++)
+		AdcVal += analogRead(A0);
+	AdcToVolt = ADC_CONV_TO_V(AdcVal / ADC_KEY_SAMPLE);
 	if(AdcToVolt > 3) // 1k 10k
 		return B_UP;
 	else if(AdcToVolt > 2.8) // 2k 10k

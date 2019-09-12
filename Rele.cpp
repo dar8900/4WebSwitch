@@ -49,9 +49,12 @@ void SwichReleStatus(uint8_t WichRele, uint8_t Status)
 	{
 		return;
 	}
-	Rele.setReleStatus(WichRele, Status);
-	ShiftReg.setSingleExit(WichRele, Status);
-	ShiftReg.loadAllExit();		
+	if(Rele.getReleStatus(WichRele) != Status)
+	{
+		Rele.setReleStatus(WichRele, Status);
+		ShiftReg.setSingleExit(WichRele, Status);
+		ShiftReg.loadAllExit();	
+	}	
 }
 
 void TurnAllRele(uint8_t Status)

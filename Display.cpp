@@ -714,6 +714,6 @@ void TaskDisplay()
 		DrawPageChange(DisplayPages[ActualPage].PageToChange, SelPageSelected);
 		RefreshBottomBar = false;
 	}	
-	delay(100);
+	delay(50);
 
 }

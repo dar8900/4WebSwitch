@@ -34,11 +34,11 @@
 #define ADC_SAMPLING_RATE			  (ADC_SAMPLE / MAX_SAMPLING_WINDOW)
 
 #define BURDEN_R_VALUE	 			  47
-#define VOLTAGE_VOLT_CORRECTION	      0.473  // Partitore dal sensore con 1.5 k e 350 si ottiene un max di 0.946V
+#define VOLTAGE_VOLT_CORRECTION	      0.597  // Partitore dal sensore con 2.2 k e 690 si ottiene un max di 1.194V
 #define PEAK_V(V)					  (V * sqrt(2))	
 
 #define TARP_VOLTAGE				  210
-#define TARP_CURRENT(Current) 	      ((Current * BURDEN_R_VALUE) / 1000)
+#define TARP_CURRENT         	      0.07
 
 #ifdef ARDUINO_BOARD_MCU
 #define MIN_ANALOG_V_READ  0.0001875
@@ -52,7 +52,7 @@ ADS1115 AnalogBoard(ADS1115_DEFAULT_ADDRESS);
 
 Chrono CalcEnergyTimer;
 
-double   AdcCurrentValues[ADC_SAMPLE], AdcVoltageValues[ADC_SAMPLE];
+double   AdcCurrentValues[ADC_SAMPLE], AdcVoltageValues[ADC_SAMPLE], CurrentRmsAcc, VoltageRmsAcc, ActivePowerRmsAcc;
 uint32_t EnergyAccumulatorCnt, AvgCounter;
 double   ApparentEnergyAccumulator, ActiveEnergyAccumulator, ReactiveEnergyAccumulator;
 double   CurrentAvgAcc, VoltageAvgAcc, ActivePowerAvgAcc, ReactivePowerAvgAcc, ApparentPowerAvgAcc, PowerFactorAvgAcc;
@@ -145,48 +145,6 @@ static void CalcSimCurrentVoltage(bool First)
 	int Sample = 0;
 	double VRms = 0.0, IRms = 0.0, RealPower = 0.0;
 	String DelayI = "", PeakI = "";
-	
-	if(First)
-	{
-#ifdef REQUEST_PEAK
-		DBG("Inserire il valore di picco per la corrente simulata");
-		while (Serial.available() > 0) 
-		{
-			PeakI += (char)Serial.read();
-		}
-		DBG("Valore inserito: " + PeakI + "A");
-		UserPeakI = (double)PeakI.toFloat();
-		if(UserPeakI == 0)
-			UserPeakI = DFLT_PEAK_I;
-#endif	
-
-#ifdef REQUEST_DELAY
-		DBG("Inserire il valore del delay in gradi per la corrente simulata");
-		while (Serial.available() > 0) 
-		{
-			DelayI += (char)Serial.read();
-		}
-		DBG("Valore inserito: " + DelayI + "°");
-		UserDelayI = (double)DelayI.toFloat();
-		if(UserDelayI == 0)
-			UserDelayI = DFLT_DELAY_I;
-#endif
-	}
-	
-#ifdef REQUEST_PEAK
-	if(PeakI != "")
-	{
-		DBG("Valore inserito: " + PeakI + "A");
-		UserPeakI = (double)PeakI.toFloat();
-	}
-#endif
-#ifdef REQUEST_DELAY
-	if(DelayI != "")
-	{
-		DBG("Valore inserito: " + DelayI + "°");
-		UserDelayI = (double)DelayI.toFloat();
-	}
-#endif	
 
 	for(Sample = 0; Sample < ADC_SAMPLE; Sample++)
 	{
@@ -267,6 +225,7 @@ static void CalcMeasure()
 {
 	int Sample = 0;
 	bool ZeroVFound = false;
+	double ActivePowerTemp = 0.0;
 	ZeroVFound = SearchZeroV();
 	if(ZeroVFound)
 	{
@@ -279,24 +238,30 @@ static void CalcMeasure()
 			AnalogBoard.setMultiplexer(ADC_CURRENT_EXIT);
 			AdcCurrentValues[Sample] = AnalogBoard.getVolts(true);
 			delayMicroseconds(1200);
-			Measures.CurrentRMS += (AdcCurrentValues[Sample] * AdcCurrentValues[Sample]);
-			Measures.VoltageRMS += (AdcVoltageValues[Sample] * AdcVoltageValues[Sample]);
-			Measures.ActivePower += (AdcCurrentValues[Sample] * AdcVoltageValues[Sample]);
+			CurrentRmsAcc += (AdcCurrentValues[Sample] * AdcCurrentValues[Sample]);
+			VoltageRmsAcc += (AdcVoltageValues[Sample] * AdcVoltageValues[Sample]);
+			ActivePowerTemp = ((AdcCurrentValues[Sample] / BURDEN_R_VALUE * 1000) * (AdcVoltageValues[Sample] * PEAK_V(220.0) / VOLTAGE_VOLT_CORRECTION));
+			ActivePowerRmsAcc += (ActivePowerTemp * ActivePowerTemp);
 		}
 		SamplingWindow++;
 		if(SamplingWindow == MAX_SAMPLING_WINDOW)
 		{
 			SamplingWindow = 0;
-			Measures.CurrentRMS /= ADC_SAMPLE;
-			Measures.CurrentRMS = sqrt(Measures.CurrentRMS);
-			Measures.VoltageRMS /= ADC_SAMPLE;
-			Measures.VoltageRMS = sqrt(Measures.VoltageRMS);
-			Measures.ActivePower /= ADC_SAMPLE;
-			Measures.VoltageRMS = 	(Measures.VoltageRMS * PEAK_V(220.0) / VOLTAGE_VOLT_CORRECTION);
-			Measures.CurrentRMS = (Measures.CurrentRMS / BURDEN_R_VALUE) * 1000; 
-			if(Measures.CurrentRMS <= TARP_CURRENT(0.07) || Measures.VoltageRMS <= TARP_VOLTAGE)
+			CurrentRmsAcc /= ADC_SAMPLE;
+			CurrentRmsAcc = sqrt(CurrentRmsAcc);
+			VoltageRmsAcc /= ADC_SAMPLE;
+			VoltageRmsAcc = sqrt(VoltageRmsAcc);
+			ActivePowerRmsAcc /= ADC_SAMPLE;
+			ActivePowerRmsAcc = sqrt(ActivePowerRmsAcc);
+			Measures.ActivePower = ActivePowerRmsAcc;
+			ActivePowerRmsAcc = 0.0;
+			Measures.VoltageRMS = (VoltageRmsAcc * PEAK_V(220.0) / VOLTAGE_VOLT_CORRECTION);
+			Measures.CurrentRMS = (CurrentRmsAcc / BURDEN_R_VALUE) * 1000; 
+			CurrentRmsAcc = 0.0;
+			VoltageRmsAcc = 0.0;
+			if(Measures.CurrentRMS <= TARP_CURRENT || Measures.VoltageRMS <= TARP_VOLTAGE)
 			{
-				if(Measures.CurrentRMS <= TARP_CURRENT(0.07))
+				if(Measures.CurrentRMS <= TARP_CURRENT)
 					Measures.CurrentRMS = 0.0;
 				if(Measures.VoltageRMS <= TARP_VOLTAGE)
 					Measures.VoltageRMS = 0.0;
@@ -313,9 +278,9 @@ static void CalcMeasure()
 				else
 					Measures.PowerFactor = INVALID_PF_VALUE;
 			}
-			CalcMaxMinAvg();
 		}
 	}
+	CalcMaxMinAvg();
 }
 
 
