@@ -2,6 +2,7 @@
 #include "Measure.h"
 #include "Rele.h"
 #include "EepromSwitch.h"
+#include "Alarms.h"
 #include <EEPROM.h>
 
 #define NODE_MCU_EEPROM_SIZE	       512
@@ -10,6 +11,7 @@
 #define RELE_STATUS_SIZE			     1
 #define RELE_OCCUR_SIZE					 2
 #define RELE_POWERON_SIZE				 sizeof(int)
+#define ALARMS_OCCUR_SIZE				 sizeof(int)
 
 #define FIRST_CHECK_VAR_ADDR		     0
 #define ENERGIES_START_ADDR			     1
@@ -17,6 +19,8 @@
 
 #define RELE_STATUS_START_ADDR    	   200
 #define RELE_STAT_START_ADDR 		   204
+
+#define ALARMS_OCCUR_START_ADDR		   250
 
 
 
@@ -114,6 +118,22 @@ static void SaveReleStatistics()
 	EEPROM.put(EepromAddrInit, ReleStatistics[RELE_4].PowerOnTime);		
 }
 
+static void SaveAlarmsOccurence()
+{
+	int EepromAddrInit = ALARMS_OCCUR_START_ADDR;
+	EEPROM.put(EepromAddrInit, Alarms[CURRENT].Occurences);
+	EepromAddrInit += ALARMS_OCCUR_SIZE;	
+	EEPROM.put(EepromAddrInit, Alarms[VOLTAGE].Occurences);
+	EepromAddrInit += ALARMS_OCCUR_SIZE;
+	EEPROM.put(EepromAddrInit, Alarms[ACTIVE_POWER].Occurences);
+	EepromAddrInit += ALARMS_OCCUR_SIZE;
+	EEPROM.put(EepromAddrInit, Alarms[REACTIVE_POWER].Occurences);
+	EepromAddrInit += ALARMS_OCCUR_SIZE;
+	EEPROM.put(EepromAddrInit, Alarms[APPARENT_POWER].Occurences);
+	EepromAddrInit += ALARMS_OCCUR_SIZE;
+	EEPROM.put(EepromAddrInit, Alarms[PF].Occurences);
+}
+
 static void LoadEnergies()
 {
 	int EepromAddrInit = ENERGIES_START_ADDR;
@@ -208,6 +228,23 @@ static void LoadReleStatistics()
 	EEPROM.get(EepromAddrInit, ReleStatistics[RELE_4].PowerOnTime);	
 }
 
+static void LoadAlarmsOccurence()
+{
+	int EepromAddrInit = ALARMS_OCCUR_START_ADDR;
+	EEPROM.get(EepromAddrInit, Alarms[CURRENT].Occurences);
+	EepromAddrInit += ALARMS_OCCUR_SIZE;	
+	EEPROM.get(EepromAddrInit, Alarms[VOLTAGE].Occurences);
+	EepromAddrInit += ALARMS_OCCUR_SIZE;
+	EEPROM.get(EepromAddrInit, Alarms[ACTIVE_POWER].Occurences);
+	EepromAddrInit += ALARMS_OCCUR_SIZE;
+	EEPROM.get(EepromAddrInit, Alarms[REACTIVE_POWER].Occurences);
+	EepromAddrInit += ALARMS_OCCUR_SIZE;
+	EEPROM.get(EepromAddrInit, Alarms[APPARENT_POWER].Occurences);
+	EepromAddrInit += ALARMS_OCCUR_SIZE;
+	EEPROM.get(EepromAddrInit, Alarms[PF].Occurences);
+}
+
+
 static void CheckFirstGo()
 {
 	if(EEPROM.read(FIRST_CHECK_VAR_ADDR) == 1)
@@ -234,6 +271,7 @@ void EepromInit()
 		LoadMaxMinAvg();
 		LoadReleSatus();
 		LoadReleStatistics();
+		LoadAlarmsOccurence();
 	}
 }
 
@@ -245,6 +283,7 @@ void TaskEeprom()
 		SaveMaxMinAvg();
 		SaveReleSatus();
 		SaveReleStatistics();
+		SaveAlarmsOccurence();
 		EEPROM.commit();
 	}
 }

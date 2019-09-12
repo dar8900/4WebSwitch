@@ -46,7 +46,6 @@ const uint16_t TimeShiftUTC = 7200;
 // WiFiServer  server(80);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", TimeShiftUTC);
-WEBTIME GlobalTime;
 
 fauxmoESP AlexaControl;
 
@@ -61,7 +60,7 @@ Chrono ToggleRele1Timer;
 // uint8_t OldReleStatus[N_RELE];
 bool WifiConnected = false;
 uint8_t WifiSignal;
-
+uint32_t TimeInSecond = 0;
 
 NETWORK_LIST MyNetworksList[MY_WIFI_LIST] = 
 {
@@ -118,20 +117,34 @@ static uint8_t GetWifiSignalPower()
 		return NO_SIGNAL;
 }
 
-static String FormatDateFromWeb(time_t TimeStamp)
+String FormatTime(uint32_t TimeStamp, bool WantSeconds)
+{
+	String HourStr = "", MinuteStr = "", SecondStr = "", TimeFormat = "";
+	uint8_t Hour = (uint8_t)((TimeStamp / 3600) % 24);
+	uint8_t Minute = (uint8_t)((TimeStamp / 60) % 60);
+	uint8_t Second = (uint8_t)(TimeStamp % 60);
+	Hour > 9 ? HourStr = String(Hour) : HourStr = "0" + String(Hour);
+	Minute > 9 ? MinuteStr = String(Minute): MinuteStr = "0" + String(Minute);
+	Second > 9 ? SecondStr = String(Second): SecondStr = "0" + String(Second);
+	if(WantSeconds)
+		TimeFormat = HourStr + ":" + MinuteStr + ":" + SecondStr;
+	else
+		TimeFormat = HourStr + ":" + MinuteStr;
+	return TimeFormat;
+}
+
+
+String FormatDate(uint32_t TimeStamp)
 {
    struct tm * ti;
-   ti = localtime (&TimeStamp);
-
+   time_t timestm = (time_t)TimeStamp;
+   ti = localtime (&timestm);
    uint16_t year = (ti->tm_year + 1900) % 100;
    String yearStr = String(year);
-
    uint8_t month = ti->tm_mon + 1;
    String monthStr = month < 10 ? "0" + String(month) : String(month);
-
    uint8_t day = ti->tm_mday;
    String dayStr = day < 10 ? "0" + String(day) : String(day);
-
    return dayStr + "/" + monthStr + "/" + yearStr;
 }
 
@@ -139,14 +152,9 @@ static void GetTime()
 {
 	timeClient.update();
 	String Hour = "", Minute = "";
-	uint32_t TimeInSecond = timeClient.getEpochTime();	
-	GlobalTime.Hour = (uint8_t)((TimeInSecond / 3600) % 24);
-	GlobalTime.Minute = (uint8_t)((TimeInSecond / 60) % 60);
-	GlobalTime.Second = (uint8_t)(TimeInSecond % 60);
-	GlobalTime.Hour > 9 ? Hour = String(GlobalTime.Hour) : Hour = "0" + String(GlobalTime.Hour);
-	GlobalTime.Minute > 9 ? Minute = String(GlobalTime.Minute):	Minute = "0" + String(GlobalTime.Minute);	
-	TimeFormatted = Hour + ":" + Minute;
-	DateFormatted = FormatDateFromWeb((time_t)TimeInSecond);
+	TimeInSecond = timeClient.getEpochTime();	
+	TimeFormatted = FormatTime(TimeInSecond, false);
+	DateFormatted = FormatDate(TimeInSecond);
 	return;
 }
 
@@ -413,6 +421,7 @@ void TaskWeb()
 		CheckWifiCon();
 		TimeFormatted = "--:--";
 		DateFormatted = "--/--/--";
+		TimeInSecond = 0;
 	}
 }
 

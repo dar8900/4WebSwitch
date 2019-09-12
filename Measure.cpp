@@ -52,7 +52,7 @@ ADS1115 AnalogBoard(ADS1115_DEFAULT_ADDRESS);
 
 Chrono CalcEnergyTimer;
 
-double   AdcCurrentValues[ADC_SAMPLE], AdcVoltageValues[ADC_SAMPLE], CurrentRmsAcc, VoltageRmsAcc, ActivePowerRmsAcc;
+double   AdcCurrentValues[ADC_SAMPLE], AdcVoltageValues[ADC_SAMPLE], AdcSearchZeroValues[ADC_SAMPLE], CurrentRmsAcc, VoltageRmsAcc, ActivePowerRmsAcc;
 uint32_t EnergyAccumulatorCnt, AvgCounter;
 double   ApparentEnergyAccumulator, ActiveEnergyAccumulator, ReactiveEnergyAccumulator;
 double   CurrentAvgAcc, VoltageAvgAcc, ActivePowerAvgAcc, ReactivePowerAvgAcc, ApparentPowerAvgAcc, PowerFactorAvgAcc;
@@ -208,9 +208,9 @@ static bool SearchZeroV()
 	AnalogBoard.setMultiplexer(ADC_VOLTAGE_EXIT);
 	for(Sample = 0; Sample < (ADC_SAMPLING_RATE * 2); Sample++)
 	{
-		AdcVoltageValues[Sample] = AnalogBoard.getVolts(true) - VOLTAGE_VOLT_CORRECTION;
+		AdcSearchZeroValues[Sample] = AnalogBoard.getVolts(true) - VOLTAGE_VOLT_CORRECTION;
 		delayMicroseconds(1200);
-		if(AdcVoltageValues[Sample] > -0.010 && AdcVoltageValues[Sample] < 0.010)
+		if(AdcSearchZeroValues[Sample] > -0.010 && AdcSearchZeroValues[Sample] < 0.010)
 		{
 			ZeroVFound = true;
 			break;
@@ -229,6 +229,7 @@ static void CalcMeasure()
 	ZeroVFound = SearchZeroV();
 	if(ZeroVFound)
 	{
+		DBG("Zero V trovato");
 		// Tempo impiegato teoricamente 50ms
 		for(Sample = (SamplingWindow * ADC_SAMPLING_RATE); Sample < (ADC_SAMPLING_RATE + (SamplingWindow * ADC_SAMPLING_RATE)); Sample++)
 		{
@@ -246,6 +247,7 @@ static void CalcMeasure()
 		SamplingWindow++;
 		if(SamplingWindow == MAX_SAMPLING_WINDOW)
 		{
+			DBG("Raggiunte le 6 finestre di campionamento");
 			SamplingWindow = 0;
 			CurrentRmsAcc /= ADC_SAMPLE;
 			CurrentRmsAcc = sqrt(CurrentRmsAcc);
@@ -279,6 +281,8 @@ static void CalcMeasure()
 					Measures.PowerFactor = INVALID_PF_VALUE;
 			}
 		}
+		for(int i = 0; i < ADC_SAMPLE; i++)
+			AdcSearchZeroValues[i] = 0.0;
 	}
 	CalcMaxMinAvg();
 }
@@ -311,18 +315,18 @@ static void CalcEnergy()
 
 void ResetTotalEnergy()
 {
-	Measures.ApparentEnergy = 0.0;
-	Measures.ActiveEnergy = 0.0;
-	Measures.ReactiveEnergy = 0.0;
+	Measures.ApparentEnergy        = 0.0;
+	Measures.ActiveEnergy          = 0.0;
+	Measures.ReactiveEnergy        = 0.0;
 	Measures.PartialApparentEnergy = 0.0; 
-	Measures.PartialActiveEnergy = 0.0;
+	Measures.PartialActiveEnergy   = 0.0;
 	Measures.PartialReactiveEnergy = 0.0; 
 }
 
 void ResetPartialEnergy()
 {
 	Measures.PartialApparentEnergy = 0.0; 
-	Measures.PartialActiveEnergy = 0.0;
+	Measures.PartialActiveEnergy   = 0.0;
 	Measures.PartialReactiveEnergy = 0.0; 
 }
 
@@ -355,7 +359,6 @@ void ResetAvg()
 void TaskMeasure()
 {
 #ifndef SIM_WAVEFORMS
-	SearchZeroV();
 	CalcMeasure();
 #else
 	CalcSimCurrentVoltage(false);

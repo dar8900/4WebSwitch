@@ -112,6 +112,7 @@ const RESET_S Reset[MAX_RESET_ITEMS] =
 	{"Reset energie parziali",      ResetPartialEnergy},
 	{"Reset max e min"		 ,      ResetMaxMin       },
 	{"Reset medie"	   	     ,      ResetAvg          },
+	{"Reset n. allarmi"	     ,      ResetAlarms       },
 	{"Restart switch"		 ,      ResetMcu          },
 };
 

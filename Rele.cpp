@@ -29,19 +29,19 @@ void ReleInit()
 }
 
 
-void TurnOnRele(uint8_t WichRele)
-{
-	Rele.setReleStatus(WichRele, STATUS_ON);
-	ShiftReg.setSingleExit(WichRele, STATUS_ON);
-	ShiftReg.loadAllExit();
-}
+// void TurnOnRele(uint8_t WichRele)
+// {
+	// Rele.setReleStatus(WichRele, STATUS_ON);
+	// ShiftReg.setSingleExit(WichRele, STATUS_ON);
+	// ShiftReg.loadAllExit();
+// }
 
-void TurnOffRele(uint8_t WichRele)
-{
-	Rele.setReleStatus(WichRele, STATUS_OFF);
-	ShiftReg.setSingleExit(WichRele, STATUS_OFF);
-	ShiftReg.loadAllExit();	
-}
+// void TurnOffRele(uint8_t WichRele)
+// {
+	// Rele.setReleStatus(WichRele, STATUS_OFF);
+	// ShiftReg.setSingleExit(WichRele, STATUS_OFF);
+	// ShiftReg.loadAllExit();	
+// }
 
 void SwichReleStatus(uint8_t WichRele, uint8_t Status)
 {

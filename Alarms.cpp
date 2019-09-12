@@ -3,15 +3,16 @@
 #include "Measure.h"
 #include "Display.h"
 #include "Rele.h"
+#include "Web.h"
 
 ALARM_S Alarms[MAX_ALARM] = 
 {
-	{	0.0,		 14.0, 	 &Measures.CurrentRMS	  ,    false, 	false,	 false ,	0, 	NO_THR},
-	{	0.0,		230.0, 	 &Measures.VoltageRMS	  ,    false, 	false,	 false ,	0, 	NO_THR},
-	{	0.0,	   2000.0, 	 &Measures.ActivePower	  ,    false, 	false,	 false ,	0, 	NO_THR},
-	{ -50.0,		 50.0, 	 &Measures.ReactivePower  ,    false, 	false,	 false ,	0, 	NO_THR},
-	{	0.0,	   3000.0, 	 &Measures.ApparentPower  ,    false, 	false,	 false ,	0, 	NO_THR},
-	{-0.980,		0.980, 	 &Measures.PowerFactor	  ,    false, 	false,	 false ,	0, 	NO_THR},
+	{	0.0,		 14.0, 	 &Measures.CurrentRMS	  ,    false, 	false,	 false ,	0, 	NO_THR, 0},
+	{	0.0,		230.0, 	 &Measures.VoltageRMS	  ,    false, 	false,	 false ,	0, 	NO_THR, 0},
+	{	0.0,	   2000.0, 	 &Measures.ActivePower	  ,    false, 	false,	 false ,	0, 	NO_THR, 0},
+	{ -50.0,		 50.0, 	 &Measures.ReactivePower  ,    false, 	false,	 false ,	0, 	NO_THR, 0},
+	{	0.0,	   3000.0, 	 &Measures.ApparentPower  ,    false, 	false,	 false ,	0, 	NO_THR, 0},
+	{-0.980,		0.980, 	 &Measures.PowerFactor	  ,    false, 	false,	 false ,	0, 	NO_THR, 0},
 };
 
 const char *AlarmsName[MAX_ALARM] = 
@@ -50,10 +51,10 @@ bool AlarmActive;
 static void ControlAlarmsThr()
 {
 	int AlarmIndex = 0;
-	float ActualMeasure = 0.0;
+	double ActualMeasure = 0.0;
 	for(AlarmIndex = 0; AlarmIndex < MAX_ALARM; AlarmIndex++)
 	{
-		ActualMeasure = (float)*Alarms[AlarmIndex].AssociatedMeasure;
+		ActualMeasure = *Alarms[AlarmIndex].AssociatedMeasure;
 		if(AlarmIndex == PF && ActualMeasure == INVALID_PF_VALUE)
 			continue;
 		if(Alarms[AlarmIndex].IsEnabled)
@@ -65,12 +66,14 @@ static void ControlAlarmsThr()
 					Alarms[AlarmIndex].IsActive = true;
 					Alarms[AlarmIndex].WichThr = OVER_THR;		
 					Alarms[AlarmIndex].Occurences++;
+					Alarms[AlarmIndex].AlarmTime = TimeInSecond;
 				}
 				if(ActualMeasure <= Alarms[AlarmIndex].LowThr)
 				{
 					Alarms[AlarmIndex].IsActive = true;
 					Alarms[AlarmIndex].WichThr = UNDER_THR;	
 					Alarms[AlarmIndex].Occurences++;
+					Alarms[AlarmIndex].AlarmTime = TimeInSecond;
 				}			
 			}
 			else
@@ -113,6 +116,15 @@ static bool CheckAlarms()
 	{
 		if(Alarms[i].IsActive)
 			return true;
+	}
+}
+
+void ResetAlarms()
+{
+	for(int i = 0; i < MAX_ALARM; i++)
+	{
+		Alarms[i].Occurences = 0;
+		Alarms[i].AlarmTime = 0;
 	}
 }
 

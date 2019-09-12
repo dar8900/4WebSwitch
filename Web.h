@@ -3,16 +3,6 @@
 
 #include <Arduino.h>
 
-typedef struct
-{
-	uint8_t Hour;
-	uint8_t Minute;
-	uint8_t Second;
-	uint8_t Day;
-	uint8_t Month;
-	uint16_t Year;
-}WEBTIME;
-
 
 typedef enum
 {
@@ -27,9 +17,13 @@ extern bool WifiConnected;
 extern String TimeFormatted;
 extern String DateFormatted;
 extern uint8_t WifiSignal;
+extern uint32_t TimeInSecond;
 
 void WifiInit(void);
 String IPAddr(void);
+
+String FormatTime(uint32_t TimeStamp, bool WantSeconds);
+String FormatDate(uint32_t TimeStamp);
 
 void TaskWeb(void);
 
