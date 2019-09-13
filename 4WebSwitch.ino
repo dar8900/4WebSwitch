@@ -9,7 +9,7 @@
 
 #define TASK_DISPLAY
 // #define TASK_KEYBOARD
-// #define TASK_MEASURE
+#define TASK_MEASURE
 #define TASK_WEB
 
 void ResetMcu()
@@ -24,7 +24,7 @@ void setup()
 	Wire.begin(5, 4);
 #endif	
 	Serial.begin(115200);
-	EepromInit();
+	// EepromInit();
 	AnalogBegin();
 #ifdef TASK_DISPLAY	
 	DisplayInit();

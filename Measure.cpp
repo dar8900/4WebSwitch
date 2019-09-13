@@ -52,6 +52,8 @@ ADS1115 AnalogBoard(ADS1115_DEFAULT_ADDRESS);
 
 Chrono CalcEnergyTimer;
 
+bool EnableSimulation = true;
+
 double   AdcCurrentValues[ADC_SAMPLE], AdcVoltageValues[ADC_SAMPLE], AdcSearchZeroValues[ADC_SAMPLE], CurrentRmsAcc, VoltageRmsAcc, ActivePowerRmsAcc;
 uint32_t EnergyAccumulatorCnt, AvgCounter;
 double   ApparentEnergyAccumulator, ActiveEnergyAccumulator, ReactiveEnergyAccumulator;
@@ -189,15 +191,14 @@ static void CalcSimCurrentVoltage(bool First)
 
 void AnalogBegin()
 {
-#ifndef SIM_WAVEFORMS
+// #ifndef SIM_WAVEFORMS
 	AnalogBoard.initialize();
 	AnalogBoard.setMode(ADS1115_MODE_CONTINUOUS);
 	AnalogBoard.setRate(ADS1115_RATE_860);
 	AnalogBoard.setGain(ADS1115_MV_2P048);
-	// AnalogBoard.setMultiplexer(ADS1115_MUX_P0_NG); 
-#else
-	CalcSimCurrentVoltage(true);
-#endif
+// #else
+	// CalcSimCurrentVoltage(true);
+// #endif
 }
 
 // Tempo impigegato teoricamente 50ms
@@ -298,12 +299,12 @@ static void CalcEnergy()
 	{
 		if(EnergyAccumulatorCnt != 0)
 		{
-			Measures.ApparentEnergy 	   += (ApparentEnergyAccumulator / EnergyAccumulatorCnt);
-			Measures.ActiveEnergy 		   += (ActiveEnergyAccumulator / EnergyAccumulatorCnt);
-			Measures.ReactiveEnergy        += (ReactiveEnergyAccumulator / EnergyAccumulatorCnt);
-			Measures.PartialApparentEnergy += (ApparentEnergyAccumulator / EnergyAccumulatorCnt);
-			Measures.PartialActiveEnergy   += (ActiveEnergyAccumulator / EnergyAccumulatorCnt);
-			Measures.PartialReactiveEnergy += (ReactiveEnergyAccumulator / EnergyAccumulatorCnt);
+			Measures.ApparentEnergy 	   += ((ApparentEnergyAccumulator / EnergyAccumulatorCnt) / 3600);
+			Measures.ActiveEnergy 		   += ((ActiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
+			Measures.ReactiveEnergy        += ((ReactiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
+			Measures.PartialApparentEnergy += ((ApparentEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
+			Measures.PartialActiveEnergy   += ((ActiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
+			Measures.PartialReactiveEnergy += ((ReactiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
 		}
 		ApparentEnergyAccumulator = 0.0;
 		ActiveEnergyAccumulator   = 0.0;
@@ -358,11 +359,10 @@ void ResetAvg()
 
 void TaskMeasure()
 {
-#ifndef SIM_WAVEFORMS
-	CalcMeasure();
-#else
-	CalcSimCurrentVoltage(false);
-#endif
+	if(!EnableSimulation)
+		CalcMeasure();
+	else
+		CalcSimCurrentVoltage(false);
 
 	CalcEnergy();	
 }

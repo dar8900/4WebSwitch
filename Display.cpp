@@ -7,7 +7,7 @@
 #include <TFT_eSPI.h> // Hardware-specific library
 #include <SPI.h>
 #include "Free_Fonts.h"
-#include "WifiIcons.h"
+#include "Icons.h"
 #include "Alarms.h"
 
 // #define TEST_DISPLAY	
@@ -19,12 +19,13 @@
 #define CENTER_POS(Str)		((Display.width() - Display.textWidth(String(Str)))/2)
 #define RIGHT_POS(Str)		(Display.width() - Display.textWidth(String(Str)))
 
-#define MAX_MEASURE_LINE	3
+#define MEASURE_IN_PAGE 	3
 
 TFT_eSPI Display = TFT_eSPI();
 
 
 Chrono RefreshTopbarTimer;
+Chrono ExitLoopTimeout(Chrono::SECONDS);
 
 enum
 {
@@ -35,10 +36,26 @@ enum
 
 enum
 {
+	ALARM_SELECTION = 0,
+	PAGE_ALARM_SEL,
+	MAX_ALARM_PAGE_ITEM
+};
+
+
+enum
+{
 	RESET_SELECTION = 0,
 	PAGE_RESET_SEL,
 	MAX_RESET_PAGE_ITEMS
 };
+
+enum
+{
+	CHANGE_DEMO_STATUS_ITEM = 0,
+	CHANGE_PAGE_DEMO_ITEM,
+	MAX_DEMO_PAGE_ITEMS	
+};
+
 
 const unsigned char *WifiIcons[] = 
 {
@@ -50,42 +67,47 @@ const unsigned char *WifiIcons[] =
 
 PAGE_DESCRIPTOR DisplayPages[MAX_PAGES] = 
 {
-	{MEASURE_PAGE 		, "Home"          },
+	{MAIN_PAGE   		, "Home"          },
 	{MEASURE_PAGE       , "Misure"        },
 	{RELE_PAGE          , "Rele"          },
 	{SETUP_PAGE         , "Setup"         },
 	{ALARM_SETUP_PAGE   , "Setup allarmi" },
 	{ALARM_STATUS_PAGE  , "Allarmi"       },
 	{RESET_PAGE         , "Reset"         },
+	{DEMO_MODE          , "Demo"          },
 };
 
 const MEASURE_PAGES MeasuresPage[MAX_MEASURE_PAGES] = 
 {
-	{&Measures.CurrentRMS, 			     &Measures.VoltageRMS, 			       &Measures.PowerFactor	   	       , "A" , "V"   , " "  },
-	{&Measures.ActivePower, 		     &Measures.ReactivePower,			   &Measures.ApparentPower			   , "W" , "VAr" , "VA" },
-	{&Measures.ActiveEnergy, 	         &Measures.ReactiveEnergy, 			   &Measures.ApparentEnergy		       , "Wh", "VArh", "VAh"},
-	{&Measures.PartialActiveEnergy,      &Measures.PartialReactiveEnergy, 	   &Measures.PartialApparentEnergy	   , "Wh", "VArh", "VAh"},
-	{&Measures.MaxMinAvg.MaxCurrent,     &Measures.MaxMinAvg.MaxVoltage, 	   &Measures.MaxMinAvg.MaxPowerFactor  , "A" , "V"   , " "  },
-	{&Measures.MaxMinAvg.MaxActivePower, &Measures.MaxMinAvg.MaxReactivePower, &Measures.MaxMinAvg.MaxApparentPower, "W" , "VAr" , "VA" },
-	{&Measures.MaxMinAvg.MinCurrent,     &Measures.MaxMinAvg.MinVoltage, 	   &Measures.MaxMinAvg.MinPowerFactor  , "A" , "V"   , " "  },
-	{&Measures.MaxMinAvg.MinActivePower, &Measures.MaxMinAvg.MinReactivePower, &Measures.MaxMinAvg.MinApparentPower, "W" , "VAr" , "VA" },
-	{&Measures.MaxMinAvg.CurrentAvg,     &Measures.MaxMinAvg.VoltageAvg, 	   &Measures.MaxMinAvg.PowerFactorAvg  , "A" , "V"   , " "  },
-	{&Measures.MaxMinAvg.ActivePowerAvg, &Measures.MaxMinAvg.ReactivePowerAvg, &Measures.MaxMinAvg.ApparentPowerAvg, "W" , "VAr" , "VA" },
+	{&Measures.CurrentRMS, 			     &Measures.VoltageRMS, 			       &Measures.PowerFactor	   	       , true, true, false},
+	{&Measures.ActivePower, 		     &Measures.ReactivePower,			   &Measures.ApparentPower			   , true, true, true},
+	{&Measures.ActiveEnergy, 	         &Measures.ReactiveEnergy, 			   &Measures.ApparentEnergy		       , true, true, true},
+	{&Measures.PartialActiveEnergy,      &Measures.PartialReactiveEnergy, 	   &Measures.PartialApparentEnergy	   , true, true, true},
+	{&Measures.MaxMinAvg.MaxCurrent,     &Measures.MaxMinAvg.MaxVoltage, 	   &Measures.MaxMinAvg.MaxPowerFactor  , true, true, false},
+	{&Measures.MaxMinAvg.MaxActivePower, &Measures.MaxMinAvg.MaxReactivePower, &Measures.MaxMinAvg.MaxApparentPower, true, true, true},
+	{&Measures.MaxMinAvg.MinCurrent,     &Measures.MaxMinAvg.MinVoltage, 	   &Measures.MaxMinAvg.MinPowerFactor  , true, true, false},
+	{&Measures.MaxMinAvg.MinActivePower, &Measures.MaxMinAvg.MinReactivePower, &Measures.MaxMinAvg.MinApparentPower, true, true, true},
+	{&Measures.MaxMinAvg.CurrentAvg,     &Measures.MaxMinAvg.VoltageAvg, 	   &Measures.MaxMinAvg.PowerFactorAvg  , true, true, false},
+	{&Measures.MaxMinAvg.ActivePowerAvg, &Measures.MaxMinAvg.ReactivePowerAvg, &Measures.MaxMinAvg.ApparentPowerAvg, true, true, true},
+	
 };
 
-const char *MeasurePageTitle[MAX_MEASURE_PAGES] = 
+
+const MEASURE_PAGE_LABEL_DES MeasureUdmLabel[MAX_MEASURE_PAGES] PROGMEM = 
 {
-	"I, V, PF",
-	"Potenze",
-	"Energie tot.",
-	"Energie parz.",
-	"Massimi I, V, PF",
-	"Massimi potenze",
-	"Minimi I, V, PF",
-	"Minimi potenze",
-	"Medie I, V, PF",
-	"Medie potenze",
+	{"I, V, PF"        , "A" , "V"   , " "  , "I"     , "V"     , " PF"   },
+	{"Potenze"	       , "W" , "VAr" , "VA" , "P.att" , "P.rea" , "P.app" },
+	{"Energie tot."    , "Wh", "VArh", "VAh", "E.att" , "E.rea" , "E.app" },
+	{"Energie parz."   , "Wh", "VArh", "VAh", "EP att", "EPrea" , "EPapp" },
+	{"Massimi I, V, PF", "A" , "V"   , " "  , "Max I" , "Max V" , "MaxPF" },
+	{"Massimi potenze" , "W" , "VAr" , "VA" , "MaxPat", "MaxPre", "MaxPap"},
+	{"Minimi I, V, PF" , "A" , "V"   , " "  , "Min I" , "Min V" , "MinPF" },
+	{"Minimi potenze"  , "W" , "VAr" , "VA" , "MinPat", "MinPre", "MinPap"},
+	{"Medie I, V, PF"  , "A" , "V"   , " "  , "Avg I" , "Avg V" , "AvgPF" },
+	{"Medie potenze"   , "W" , "VAr" , "VA" , "AvgPat", "AvgPre", "AvgPap"},
+	
 };
+
 
 const REFORMAT ReformatTab[] = 
 {
@@ -130,11 +152,17 @@ static uint8_t 	RelePageItemSel;
 static uint8_t 	ReleIndex;
 static bool     RefreshReleChange = false;
 
-static uint8_t  ResetOrPage;
+static uint8_t  AlarmOrPage = ALARM_SELECTION;
+static uint8_t  AlarmItem = CURRENT;
+static bool     RefreshAlarmItem = false;
+
+static uint8_t  ResetOrPage = RESET_SELECTION;
 static uint8_t  ResetItem = RESET_ENERGIES;
 static bool     RefreshResetItem = false;
 
-
+static uint8_t 	DemoItemSel;
+static uint8_t 	DemoIndex = 1;
+static bool     RefreshDemoChange = false;
 
 
 
@@ -153,7 +181,7 @@ static void ClearScreen(bool FullScreen)
 	else
 	{
 		Ypos = 14;			
-		Display.fillRect( 0,  Ypos,  Display.width(),  Display.height() - Ypos , BG_COLOR);
+		Display.fillRect( 0,  Ypos,  Display.width(),  Display.height() - (Ypos * 2) , BG_COLOR);
 	}
 }
 
@@ -161,22 +189,31 @@ void DrawPopUp(const char *Text, uint16_t Delay)
 {
 	String TextStr = String(Text);
 	ClearScreen(false);
-	Display.setFreeFont(FMB18);
+	Display.setFreeFont(FMB12);
 	Display.drawRoundRect(0, 14, Display.width(), Display.height() - 14, 2, TFT_WHITE);
-	Display.drawString(TextStr, CENTER_POS(TextStr), (Display.height() - Display.fontHeight())/2, TFT_WHITE);
+	Display.drawString(TextStr, CENTER_POS(TextStr), (Display.height() - Display.fontHeight())/2);
 	delay(Delay);
 	ClearScreen(false);
 }
 
-// Nome dello strumento, v FW, sotto ora data e icone varie
 static void DrawTopInfoBar()
 {
-	if(RefreshTopbarTimer.hasPassed(500, true))
+	Display.fillRect( 0,  0,  Display.width(),  13 , BG_COLOR);
+	Display.setFreeFont(FM9);
+	int IconsXPos = 0;
+	Display.drawString(TimeFormatted, LEFT_POS, TOP_POS);
+	Display.drawString(DateFormatted, RIGHT_POS(DateFormatted), TOP_POS);
+	IconsXPos = Display.textWidth(TimeFormatted);
+	Display.drawXBitmap(IconsXPos + 10, 0, WifiIcons[WifiSignal], 12, 12, TFT_CYAN);
+	if(AlarmActive)
+		Display.drawXBitmap(IconsXPos + 24, 0, Alarms_bits, 12, 12, TFT_YELLOW);
+	IconsXPos = IconsXPos + 26;
+	for(int i = 0; i < N_RELE; i++)
 	{
-		Display.setFreeFont(FM9);	
-		Display.drawString(TimeFormatted, LEFT_POS, TOP_POS);
-		Display.drawString(DateFormatted, RIGHT_POS(DateFormatted), TOP_POS);
-		Display.drawXBitmap(160, 0, WifiIcons[WifiSignal], 12, 12, TFT_CYAN);
+		if(Rele.getReleStatus(i) == STATUS_OFF)
+			Display.fillCircle(IconsXPos + (i * (2 + 4)), 4, 2, TFT_RED);
+		else
+			Display.fillCircle(IconsXPos + (i * (2 + 4)), 4, 2, TFT_GREEN);
 	}
 }
 
@@ -185,7 +222,7 @@ static void DrawPageChange(int8_t Page, bool Selected)
 	int32_t XPos = CENTER_POS(DisplayPages[Page].PageName), YPos = BOTTOM_POS(DisplayPages[Page].PageName);
 	
 	Display.setFreeFont(FMB9);	
-	Display.fillRect( 0,  Display.height() - Display.fontHeight() - 4,  Display.width(),  Display.height() , BG_COLOR);
+	Display.fillRect( 0,  Display.height() - Display.fontHeight() - 4,  Display.width(),  14 , BG_COLOR);
 	Display.drawString((String)DisplayPages[Page].PageName, XPos, YPos);
 	if(Selected)
 		Display.drawRoundRect( XPos - 2,  YPos - 2,  Display.textWidth((String)DisplayPages[Page].PageName) + 4,  Display.fontHeight() + 2,  2,  TFT_WHITE);
@@ -194,7 +231,38 @@ static void DrawPageChange(int8_t Page, bool Selected)
 	Display.drawString((String)DisplayPages[Page].PageName, XPos, YPos);
 }
 
-
+static void CheckBottomPageSelected(uint8_t PageToGo)
+{
+	switch(PageToGo)
+	{
+		case MAIN_PAGE:
+			SelPageSelected = true;
+			break;
+		case MEASURE_PAGE:
+			SelPageSelected = true;
+			break;
+		case RELE_PAGE:
+			SelPageSelected = false;
+			break;
+		case SETUP_PAGE: 
+			SelPageSelected = true;
+			break;
+		case ALARM_SETUP_PAGE: 
+			SelPageSelected = true;
+			break;
+		case ALARM_STATUS_PAGE:
+			SelPageSelected = true;
+			break;
+		case RESET_PAGE:
+			SelPageSelected = false;
+			break;
+		case DEMO_MODE:
+			SelPageSelected = false;
+			break;
+		default:
+			break;
+	}
+}
 
 static void DrawReleStatus()
 {
@@ -204,10 +272,14 @@ static void DrawReleStatus()
 	for(int i = 0; i < N_RELE; i++)
 	{
 		NomePresa = String(i + 1);
+		// if(Rele.getReleStatus(i) == STATUS_OFF)
+			// Display.fillCircle((CircleRadius + 10) + (i * ((CircleRadius * 2) + 6)), 150, CircleRadius, TFT_RED);
+		// else
+			// Display.fillCircle((CircleRadius + 10) + (i * ((CircleRadius * 2) + 6)), 150, CircleRadius, TFT_GREEN);
 		if(Rele.getReleStatus(i) == STATUS_OFF)
-			Display.fillCircle((CircleRadius + 10) + (i * ((CircleRadius * 2) + 6)), 150, CircleRadius, TFT_RED);
+			Display.drawXBitmap(10 + (i * (70 + 5)), 115, IconaPresa_bits, 70, 70, TFT_RED);
 		else
-			Display.fillCircle((CircleRadius + 10) + (i * ((CircleRadius * 2) + 6)), 150, CircleRadius, TFT_GREEN);
+			Display.drawXBitmap(10 + (i * (70 + 5)), 115, IconaPresa_bits, 70, 70, TFT_GREEN);
 		Display.drawString("Presa", (CircleRadius + 10 - Display.textWidth("Presa") / 2) + (i * (Display.textWidth("Presa") + 6 + CircleRadius - 20)), 	150 - (Display.fontHeight() * 2) - 38 );
 		Display.drawString(NomePresa, (CircleRadius + 6) + (i * ((CircleRadius * 2) + 4)), 150 - (Display.fontHeight()) - 38 );
 	}	
@@ -217,7 +289,6 @@ static void DrawReleStatus()
 
 static void DrawMainScreen()
 {
-	SelPageSelected = true;
 	Display.setFreeFont(FMB12);
 	DrawReleStatus();
 	ButtonPress = CheckButtons();
@@ -252,6 +323,7 @@ static void DrawMainScreen()
 			break;			
 		case B_OK:
 			ActualPage = DisplayPages[ActualPage].PageToChange;
+			CheckBottomPageSelected(ActualPage);
 			PageChanged = true;
 			break;
 		default:
@@ -279,49 +351,71 @@ static uint8_t SearchRange(double Value)
 	return i;
 }
 
-static void FormatAndPrintMeasure(uint8_t MeasurePageNumber)
+
+static void RefreshMeasurePage(uint8_t MeasurePageNumber)
 {
 	uint8_t Range = 0;
-	String MeasureToPrint = "", UdmRF = "";
-	for(int Line = 0; Line < MAX_MEASURE_LINE; Line++)
+	String MeasureToPrint = "", UdmRF = "", Title = "";
+	bool Refactor = true;
+	Title = String(MeasureUdmLabel[MeasurePageNumber].PageTitle);
+	Display.setFreeFont(FM12);
+	Display.drawString(Title, CENTER_POS(Title), 14);		
+	for(int Line = 0; Line < MEASURE_IN_PAGE; Line++)
 	{
 		double ActualMeasure = 0.0;
-		String Udm = "";
-
-		if(Line == 0)
+		String Udm = "", Label = "";
+		switch(Line)
 		{
-			ActualMeasure = *MeasuresPage[MeasurePageNumber].FirstLineMeasure;
-			Udm = String(MeasuresPage[MeasurePageNumber].UdmFirstLine);
+			case 0:
+				ActualMeasure = *MeasuresPage[MeasurePageNumber].FirstLineMeasure;
+				Udm = String(MeasureUdmLabel[MeasurePageNumber].UdmFirstLine);
+				Label = String(MeasureUdmLabel[MeasurePageNumber].MeasureLabelFirstLine);
+				Refactor = MeasuresPage[MeasurePageNumber].ReformatFirstLine;			
+				break;
+			case 1:
+				ActualMeasure = *MeasuresPage[MeasurePageNumber].SecondLineMeasure;
+				Udm = String(MeasureUdmLabel[MeasurePageNumber].UdmSecondLine);
+				Label = String(MeasureUdmLabel[MeasurePageNumber].MeasureLabelSecondLine);
+				Refactor = MeasuresPage[MeasurePageNumber].ReformatSecondLine;
+				break;
+			case 2:
+				ActualMeasure = *MeasuresPage[MeasurePageNumber].ThirdLineMeasure;
+				Udm = String(MeasureUdmLabel[MeasurePageNumber].UdmThirdLine);
+				Label = String(MeasureUdmLabel[MeasurePageNumber].MeasureLabelThirdLine);
+				Refactor = MeasuresPage[MeasurePageNumber].ReformatThirdLine;			
+				break;
+			default:
+				break;
 		}
-		else if(Line == 1)
+		if(Refactor)
 		{
-			ActualMeasure = *MeasuresPage[MeasurePageNumber].SecondLineMeasure;
-			Udm = String(MeasuresPage[MeasurePageNumber].UdmSecondLine);
+			Range = SearchRange(ActualMeasure);
+			ActualMeasure *= ReformatTab[Range].RefactorValue;
+			UdmRF = String(ReformatTab[Range].Odg) + Udm;
 		}
 		else
-		{
-			ActualMeasure = *MeasuresPage[MeasurePageNumber].ThirdLineMeasure;
-			Udm = String(MeasuresPage[MeasurePageNumber].UdmThirdLine);
-		}
-		Range = SearchRange(ActualMeasure);
-		ActualMeasure *= ReformatTab[Range].RefactorValue;
-		MeasureToPrint = String(ActualMeasure, 3);
-		UdmRF += String(ReformatTab[Range].Odg) + Udm;
+			UdmRF = Udm;
+		if(ActualMeasure < 10)
+			MeasureToPrint = "  " +  String(ActualMeasure, 3);
+		else if(ActualMeasure < 100)
+			MeasureToPrint = " " +  String(ActualMeasure, 3);
+		else
+			MeasureToPrint = String(ActualMeasure, 3);
 		Display.setFreeFont(FMB18);
-		Display.drawString(MeasureToPrint, CENTER_POS(MeasureToPrint), 34 + (Line * (Display.fontHeight() + 10)));
+		Display.drawString(MeasureToPrint, CENTER_POS(MeasureToPrint), 74 + (Line * (Display.fontHeight() + 10)));
 		Display.setFreeFont(FM9);
-		Display.drawString(UdmRF, RIGHT_POS(UdmRF), 26 + (Line * (38)));	
+		Display.drawString(UdmRF, RIGHT_POS(UdmRF), 70 + (Line * (50)));	
+		Display.drawString(Label, LEFT_POS, 70 + (Line * (50)));	
 	}
 	Display.setFreeFont(FM9);
 	String MeasurePageNumberStr = String(MeasurePageNumber + 1) + "/" + String(MAX_MEASURE_PAGES);
-	Display.drawString(MeasurePageNumberStr, CENTER_POS(MeasurePageNumberStr), 210);
+	Display.drawString(MeasurePageNumberStr, CENTER_POS(MeasurePageNumberStr), 200);
 }
 
 
 static void DrawMeasurePage()
 {
-	SelPageSelected = true;
-	FormatAndPrintMeasure(MeasurePageSelection);
+	RefreshMeasurePage(MeasurePageSelection);
 	ButtonPress = CheckButtons();
 	switch(ButtonPress)
 	{
@@ -356,6 +450,7 @@ static void DrawMeasurePage()
 			MeasurePageSelection = LINE_MEASURES;
 			MeasurePageNumber = "";
 			ActualPage = DisplayPages[ActualPage].PageToChange;
+			CheckBottomPageSelected(ActualPage);
 			PageChanged = true;
 			break;
 		default:
@@ -369,30 +464,30 @@ static void DrawMeasurePage()
 	}
 }
 
-static void RefreshReleChangeStatus(uint8_t ReleIndex, bool ChangeStatusSel, bool *RefreshReleChange)
+static void RefreshReleChangeStatus(uint8_t releIndex, bool ChangeStatusSel, bool *RefreshReleChange)
 {
-	String ReleName = "Presa " + String(ReleIndex + 1), Status = "SPENTA";
+	String ReleName = "Presa " + String(releIndex + 1), Status = "SPENTA";
 	if(*RefreshReleChange)
 	{
-		Display.fillRoundRect( 0,  64,  Display.width(),  140,  2,  BG_COLOR);
+		Display.fillRoundRect( 0,  64,  Display.width(),  (Display.fontHeight() * 2) + 14,  2,  BG_COLOR);
 		*RefreshReleChange = false;
 	}
 	ChangeStatusSel = !ChangeStatusSel;
-	if(ChangeStatusSel)
-		Display.drawRoundRect( 0,  64,  Display.width(),  140,  2,  TFT_WHITE);
-	else
-		Display.drawRoundRect( 0,  64,  Display.width(),  140,  2,  BG_COLOR);
-	Display.setFreeFont(FMB24);
+	Display.setFreeFont(FMB18);
 	Display.drawString(ReleName, CENTER_POS(ReleName), 68);
-	if(Rele.getReleStatus(ReleIndex) == STATUS_ON)
+	if(Rele.getReleStatus(releIndex) == STATUS_ON)
 	{
-		Display.setTextColor(BG_COLOR, TFT_GREEN);
+		Display.setTextColor(TFT_GREEN);
 		Status = "ACCESA";
 	}
 	else
-		Display.setTextColor(TFT_WHITE, TFT_RED);
-	Display.drawString(Status, CENTER_POS(ReleName), 104);
+		Display.setTextColor(TFT_RED);
+	Display.drawString(Status, CENTER_POS(Status), 68 + Display.fontHeight() + 10);
 	Display.setTextColor(TFT_WHITE);
+	if(ChangeStatusSel)
+		Display.drawRoundRect( 0,  64,  Display.width(),  (Display.fontHeight() * 2) + 16,  2,  TFT_WHITE);
+	else                                                                                
+		Display.drawRoundRect( 0,  64,  Display.width(),  (Display.fontHeight() * 2) + 16,  2,  BG_COLOR);
 }
 
 
@@ -451,6 +546,7 @@ static void DrawRelePage()
 				SelPageSelected = false;
 			else
 				SelPageSelected = true;
+			RefreshBottomBar = true;
 			break;				
 		case B_OK:
 			if(RelePageItemSel == CHANGE_RELE_STATUS_ITEM)
@@ -463,6 +559,7 @@ static void DrawRelePage()
 				ReleIndex = RELE_1;
 				RelePageItemSel = CHANGE_RELE_STATUS_ITEM;
 				ActualPage = DisplayPages[ActualPage].PageToChange;
+				CheckBottomPageSelected(ActualPage);
 				PageChanged = true;
 			}
 			break;
@@ -474,7 +571,7 @@ static void DrawRelePage()
 
 static void DrawSetupPage()
 {
-	SelPageSelected = true;
+
 	ButtonPress = CheckButtons();
 	switch(ButtonPress)
 	{
@@ -498,6 +595,7 @@ static void DrawSetupPage()
 			break;
 		case B_OK:
 			ActualPage = DisplayPages[ActualPage].PageToChange;
+			CheckBottomPageSelected(ActualPage);
 			PageChanged = true;
 			break;
 		default:
@@ -506,33 +604,193 @@ static void DrawSetupPage()
 
 }
 
+
+static void RefreshAlarmSetupList(uint8_t AlarmItem, bool AlarmSelected, bool *RefreshAlarmItem)
+{
+	String AlarmItemName = String(AlarmsName[AlarmItem]), AlarmNumber = "";
+	AlarmSelected = !AlarmSelected;
+	if(*RefreshAlarmItem)
+	{
+		ClearScreen(false);
+		*RefreshAlarmItem = false;
+	}
+	Display.setFreeFont(FMB12);
+	Display.drawString(AlarmItemName, CENTER_POS(AlarmItemName), 104);
+	if(AlarmSelected)
+		Display.drawRoundRect( CENTER_POS(AlarmItemName) - 4,  104  - 4,  Display.textWidth(AlarmItemName) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
+	else
+		Display.drawRoundRect( CENTER_POS(AlarmItemName) - 4,  104  - 4,  Display.textWidth(AlarmItemName) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
+	Display.setFreeFont(FM9);
+	AlarmNumber = String(AlarmItem + 1) + "/" + String(MAX_ALARM);
+	Display.drawString(AlarmNumber, CENTER_POS(AlarmNumber), 200);
+}
+
+static void ModifyAlarm(uint8_t AlarmItem)
+{
+	bool ExitModifyAlarm = false;
+	uint8_t ItemToModify = 0;
+	bool Enabled = false, Disconnect = false;
+	String DisabledStr = "", DisconnectStr = "";
+	ExitLoopTimeout.restart();
+	while(!ExitModifyAlarm)
+	{
+		ClearScreen(false);
+		DrawTopInfoBar();
+		if(ItemToModify == 0)
+		{
+			if(Enabled)
+				DisabledStr = "ABILITATO";
+			else
+				DisabledStr = "DISABILITATO";
+		}
+		else
+		{
+			if(Disconnect)
+				DisconnectStr = "ABILITATA";
+			else
+				DisconnectStr = "DISABILITATA";
+		}		
+		Display.setFreeFont(FMB12);
+		Display.drawString(DisabledStr, CENTER_POS(DisabledStr), 50);
+		Display.drawString(DisconnectStr, CENTER_POS(DisconnectStr), 130);
+		if(ItemToModify == 0)
+		{
+			Display.drawRoundRect( CENTER_POS(DisabledStr) - 4,  50  - 4,  Display.textWidth(DisabledStr) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
+			Display.drawRoundRect( CENTER_POS(DisconnectStr) - 4,  130  - 4,  Display.textWidth(DisconnectStr) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
+		}
+		else
+		{
+			Display.drawRoundRect( CENTER_POS(DisabledStr) - 4,  50  - 4,  Display.textWidth(DisabledStr) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
+			Display.drawRoundRect( CENTER_POS(DisconnectStr) - 4,  130  - 4,  Display.textWidth(DisconnectStr) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);		
+		}
+		
+		ButtonPress = CheckButtons();
+		switch(ButtonPress)
+		{
+			case B_UP:
+				if(ItemToModify == 0)
+				{
+					Enabled = !Enabled;
+				}
+				else
+				{
+					Disconnect = !Disconnect;
+				}
+				ExitLoopTimeout.restart();
+				break;
+			case B_DOWN:
+				if(ItemToModify == 0)
+				{
+					Enabled = !Enabled;
+				}
+				else
+				{
+					Disconnect = !Disconnect;
+				}
+				ExitLoopTimeout.restart();
+				break;
+			case B_LEFT:
+				if(ItemToModify < 1)
+					ItemToModify++;
+				else
+					ItemToModify = 0;
+				ExitLoopTimeout.restart();
+				break;
+			case B_OK:
+				if(ItemToModify == 0)
+				{
+					Alarms[AlarmItem].IsEnabled = Enabled;
+				}
+				else
+				{
+					Alarms[AlarmItem].EnableDisconnection = Disconnect;
+				}
+				ClearScreen(false);
+				ExitModifyAlarm = true;
+				ExitLoopTimeout.stop();
+				break;
+			default:
+				break;
+		}
+		if(ExitLoopTimeout.hasPassed(5, true))
+			ExitModifyAlarm = true;
+		delay(50);
+	}
+}
+
 static void DrawAlarmSetupPage()
 {
-	SelPageSelected = true;
+	RefreshAlarmSetupList(AlarmItem, SelPageSelected, &RefreshAlarmItem);
 	ButtonPress = CheckButtons();
 	switch(ButtonPress)
 	{
 		case B_UP:
-			if(DisplayPages[ActualPage].PageToChange > 0)
+			if(AlarmOrPage == ALARM_SELECTION)
 			{
-				DisplayPages[ActualPage].PageToChange--;
+				if(AlarmItem > CURRENT)
+					AlarmItem--;
+				else
+					AlarmItem = MAX_ALARM - 1;
+				RefreshAlarmItem = true;
 			}
 			else
-				DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
-			RefreshBottomBar = true;
+			{
+				if(DisplayPages[ActualPage].PageToChange > 0)
+				{
+					DisplayPages[ActualPage].PageToChange--;
+				}
+				else
+					DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
+				RefreshBottomBar = true;
+			}	
 			break;
 		case B_DOWN:
-			if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
+			if(AlarmOrPage == ALARM_SELECTION)
 			{
-				DisplayPages[ActualPage].PageToChange++;
+				if(AlarmItem < MAX_ALARM - 1)
+					AlarmItem++;
+				else
+					AlarmItem = CURRENT;
+				RefreshAlarmItem = true;
 			}
 			else
-				DisplayPages[ActualPage].PageToChange = 0;
+			{		
+				if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
+				{
+					DisplayPages[ActualPage].PageToChange++;
+				}
+				else
+					DisplayPages[ActualPage].PageToChange = 0;
+				RefreshBottomBar = true;
+			}
+			break;
+		case B_LEFT:
+			if(AlarmOrPage < MAX_RESET_PAGE_ITEMS - 1)
+				AlarmOrPage++;
+			else
+				AlarmOrPage = 0;
+			if(AlarmOrPage == ALARM_SELECTION)
+				SelPageSelected = false;
+			else
+				SelPageSelected = true;
 			RefreshBottomBar = true;
 			break;
 		case B_OK:
-			ActualPage = DisplayPages[ActualPage].PageToChange;
-			PageChanged = true;
+			if(AlarmOrPage == ALARM_SELECTION)
+			{
+				ModifyAlarm(AlarmItem);
+				RefreshAlarmItem = true;
+				RefreshBottomBar = true;
+			}
+			else
+			{
+				AlarmItem = 0;
+				RefreshAlarmItem = true;
+				AlarmOrPage = ALARM_SELECTION;
+				ActualPage = DisplayPages[ActualPage].PageToChange;
+				CheckBottomPageSelected(ActualPage);
+				PageChanged = true;
+			}
 			break;
 		default:
 			break;
@@ -542,7 +800,6 @@ static void DrawAlarmSetupPage()
 
 static void DrawAlarmStatusPage()
 {
-	SelPageSelected = true;
 	ButtonPress = CheckButtons();
 	switch(ButtonPress)
 	{
@@ -566,6 +823,7 @@ static void DrawAlarmStatusPage()
 			break;
 		case B_OK:
 			ActualPage = DisplayPages[ActualPage].PageToChange;
+			CheckBottomPageSelected(ActualPage);
 			PageChanged = true;
 			break;
 		default:
@@ -584,21 +842,20 @@ static void RefreshResetList(uint8_t ResetItem, bool ResetSelected, bool *Refres
 		ClearScreen(false);
 		*RefreshResetItem = false;
 	}
-	if(ResetSelected)
-		Display.drawRoundRect( 0,  102,  Display.width(),  122,  2,  TFT_WHITE);
-	else
-		Display.drawRoundRect( 0,  102,  Display.width(),  122,  2,  BG_COLOR);
-	Display.setFreeFont(FMB24);
+	Display.setFreeFont(FMB12);
 	Display.drawString(ResetItemName, CENTER_POS(ResetItemName), 104);
+	if(ResetSelected)
+		Display.drawRoundRect( CENTER_POS(ResetItemName) - 4,  104  - 4,  Display.textWidth(ResetItemName) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
+	else
+		Display.drawRoundRect( CENTER_POS(ResetItemName) - 4,  104  - 4,  Display.textWidth(ResetItemName) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
 	Display.setFreeFont(FM9);
 	ResetNumber = String(ResetItem + 1) + "/" + String(MAX_RESET_ITEMS);
-	Display.drawString(ResetNumber, CENTER_POS(ResetNumber), 210);
+	Display.drawString(ResetNumber, CENTER_POS(ResetNumber), 200);
 }
 
 
 static void DrawResetPage()
 {
-	SelPageSelected = true;
 	RefreshResetList(ResetItem, SelPageSelected, &RefreshResetItem);
 	ButtonPress = CheckButtons();
 	switch(ButtonPress)
@@ -652,6 +909,7 @@ static void DrawResetPage()
 				SelPageSelected = false;
 			else
 				SelPageSelected = true;
+			RefreshBottomBar = true;
 			break;				
 		case B_OK:
 			if(ResetOrPage == RESET_SELECTION)
@@ -659,12 +917,131 @@ static void DrawResetPage()
 				Reset[ResetItem].ResetFunc();
 				DrawPopUp("Reset riuscito", 2000);
 				RefreshResetItem = true;
+				RefreshBottomBar = true;
 			}
 			else
 			{
 				ResetItem = RESET_ENERGIES;
 				ResetOrPage = RESET_SELECTION;
 				ActualPage = DisplayPages[ActualPage].PageToChange;
+				CheckBottomPageSelected(ActualPage);
+				PageChanged = true;
+			}
+			break;
+		default:
+			break;
+	}
+
+}
+
+
+static void RefreshDemoAct(uint8_t DemoActItem, bool ChangeStatusSel, bool *RefreshDemoAct)
+{
+	String DemoStr = "DISABILITATO";
+	if(*RefreshDemoAct)
+	{
+		Display.fillRoundRect( 0,  64,  Display.width(),  (Display.fontHeight() * 2) + 14,  2,  BG_COLOR);
+		*RefreshDemoAct = false;
+	}
+	ChangeStatusSel = !ChangeStatusSel;
+	Display.setFreeFont(FMB18);
+	if(DemoActItem == 0)
+	{
+		Display.setTextColor(TFT_RED);
+	}
+	else
+	{
+		Display.setTextColor(TFT_GREEN);
+		DemoStr = "ABILITATO";
+	}
+	Display.drawString(DemoStr, CENTER_POS(DemoStr), 70);
+	Display.setTextColor(TFT_WHITE);
+	if(ChangeStatusSel)
+		Display.drawRoundRect( 0,  70 - 4,  Display.textWidth(DemoStr),  (Display.fontHeight() + 4),  2,  TFT_WHITE);
+	else                                                                           
+		Display.drawRoundRect( 0,  70 - 4,  Display.textWidth(DemoStr),  (Display.fontHeight() + 4),  2,  BG_COLOR);
+}
+
+
+static void DrawDemoActPage()
+{
+	RefreshDemoAct(DemoIndex, SelPageSelected, &RefreshDemoChange);
+	ButtonPress = CheckButtons();
+	switch(ButtonPress)
+	{
+		case B_UP:
+			if(DemoItemSel == CHANGE_DEMO_STATUS_ITEM)
+			{
+				if(DemoIndex > 0)
+					DemoIndex--;
+				else
+					DemoIndex = 1;
+				RefreshDemoChange = true;
+			}
+			else
+			{
+				if(DisplayPages[ActualPage].PageToChange > 0)
+				{
+					DisplayPages[ActualPage].PageToChange--;
+				}
+				else
+					DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
+				RefreshBottomBar = true;
+			}
+			break;
+		case B_DOWN:
+			if(DemoItemSel == CHANGE_RELE_STATUS_ITEM)
+			{
+				if(DemoIndex < 1)
+					DemoIndex++;
+				else
+					DemoIndex = 0;
+				RefreshDemoChange = true;
+			}
+			else
+			{
+				if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
+				{
+					DisplayPages[ActualPage].PageToChange++;
+				}
+				else
+					DisplayPages[ActualPage].PageToChange = 0;
+				RefreshBottomBar = true;
+			}
+			break;
+		case B_LEFT:
+			if(DemoItemSel < MAX_DEMO_PAGE_ITEMS - 1)
+				DemoItemSel++;
+			else
+				DemoItemSel = 0;
+			if(DemoItemSel == CHANGE_DEMO_STATUS_ITEM)
+				SelPageSelected = false;
+			else
+				SelPageSelected = true;
+			RefreshBottomBar = true;
+			break;				
+		case B_OK:
+			if(DemoItemSel == CHANGE_DEMO_STATUS_ITEM)
+			{
+				if(DemoIndex == 0)
+				{
+					EnableSimulation = false;
+					DrawPopUp("DEMO DISABILITATO");
+				}
+				else
+				{
+					EnableSimulation = true;
+					DrawPopUp("DEMO ABILITATO");
+				}	
+				RefreshBottomBar = true;
+				RefreshDemoChange = true;
+			}
+			else
+			{
+				DemoIndex = 0;
+				DemoItemSel = CHANGE_DEMO_STATUS_ITEM;
+				ActualPage = DisplayPages[ActualPage].PageToChange;
+				CheckBottomPageSelected(ActualPage);
 				PageChanged = true;
 			}
 			break;
@@ -678,12 +1055,14 @@ void TaskDisplay()
 {
 	if(PageChanged)
 	{
-		// Display.fillScreen(BG_COLOR); 
 		ClearScreen(true);
 		PageChanged = false;
 		RefreshBottomBar = true;
 	}		
-	DrawTopInfoBar();
+	if(RefreshTopbarTimer.hasPassed(500, true))
+	{	
+		DrawTopInfoBar();
+	}
 	switch(ActualPage)
 	{
 		case MAIN_PAGE:
@@ -706,6 +1085,9 @@ void TaskDisplay()
 			break;
 		case RESET_PAGE:
 			DrawResetPage();
+			break;
+		case DEMO_MODE:
+			DrawDemoActPage();
 			break;
 		default:
 			break;

@@ -47,7 +47,7 @@ typedef struct
 	MAX_MIN_AVG_MEASURE MaxMinAvg;
 }GENERAL_MEASURES;
 
-
+extern bool EnableSimulation;
 
 extern GENERAL_MEASURES Measures;
 

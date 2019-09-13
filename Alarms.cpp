@@ -117,6 +117,7 @@ static bool CheckAlarms()
 		if(Alarms[i].IsActive)
 			return true;
 	}
+	return false;
 }
 
 void ResetAlarms()

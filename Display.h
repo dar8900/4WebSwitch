@@ -10,7 +10,8 @@ typedef enum
 	ALARM_SETUP_PAGE,     // 4
 	ALARM_STATUS_PAGE,    // 5
 	RESET_PAGE,           // 6
-	MAX_PAGES 			  // 7
+	DEMO_MODE, 			  // 7
+	MAX_PAGES 			  // 8
 }MAIN_PAGES;
 
 typedef struct
@@ -29,9 +30,9 @@ typedef struct
 	double *SecondLineMeasure;
 	double *ThirdLineMeasure;
 	
-	char   *UdmFirstLine;
-	char   *UdmSecondLine;
-	char   *UdmThirdLine;
+	bool   ReformatFirstLine;
+	bool   ReformatSecondLine;
+	bool   ReformatThirdLine;
 	
 }MEASURE_PAGES;
 
@@ -49,14 +50,26 @@ typedef enum
 	TOTAL_ENERGIES,
 	PARTIAL_ENERGIES,
 	MAX_LINE_MEASURES,
-	MIN_LINE_MEASURES,
 	MAX_POWER_MEASURES,
+	MIN_LINE_MEASURES,
 	MIN_POWER_MEASURES,
 	AVG_LINE_MEASURES,
 	AVG_POWER_MEASURES,
 	MAX_MEASURE_PAGES
 	
 }MEASURES_ITEM;
+
+typedef struct
+{
+	const char *PageTitle;
+	const char *UdmFirstLine;
+	const char *UdmSecondLine;
+	const char *UdmThirdLine;
+	const char *MeasureLabelFirstLine;
+	const char *MeasureLabelSecondLine;
+	const char *MeasureLabelThirdLine;
+}MEASURE_PAGE_LABEL_DES;
+
 
 
 typedef struct
