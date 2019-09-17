@@ -24,7 +24,7 @@
 TFT_eSPI Display = TFT_eSPI();
 
 
-Chrono RefreshTopbarTimer;
+Chrono RefreshTopbarTimer, RefreshMeasurePageTimer;
 Chrono ExitLoopTimeout(Chrono::SECONDS);
 
 enum
@@ -140,7 +140,7 @@ const RESET_S Reset[MAX_RESET_ITEMS] =
 
 
 static uint8_t 	ButtonPress;
-static bool 	SelPageSelected;
+static bool 	SelPageSelected = true;
 static uint8_t 	ActualPage = MAIN_PAGE;
 static bool     RefreshBottomBar = true, PageChanged = false;
 
@@ -181,19 +181,19 @@ static void ClearScreen(bool FullScreen)
 	else
 	{
 		Ypos = 14;			
-		Display.fillRect( 0,  Ypos,  Display.width(),  Display.height() - (Ypos * 2) , BG_COLOR);
+		Display.fillRect( 0,  Ypos,  Display.width(),  Display.height() - Ypos  , BG_COLOR);
 	}
 }
 
 void DrawPopUp(const char *Text, uint16_t Delay)
 {
 	String TextStr = String(Text);
-	ClearScreen(false);
+	ClearScreen(true);
 	Display.setFreeFont(FMB12);
 	Display.drawRoundRect(0, 14, Display.width(), Display.height() - 14, 2, TFT_WHITE);
 	Display.drawString(TextStr, CENTER_POS(TextStr), (Display.height() - Display.fontHeight())/2);
 	delay(Delay);
-	ClearScreen(false);
+	ClearScreen(true);
 }
 
 static void DrawTopInfoBar()
@@ -207,22 +207,24 @@ static void DrawTopInfoBar()
 	Display.drawXBitmap(IconsXPos + 10, 0, WifiIcons[WifiSignal], 12, 12, TFT_CYAN);
 	if(AlarmActive)
 		Display.drawXBitmap(IconsXPos + 24, 0, Alarms_bits, 12, 12, TFT_YELLOW);
-	IconsXPos = IconsXPos + 26;
+	IconsXPos = IconsXPos + 46;
 	for(int i = 0; i < N_RELE; i++)
 	{
 		if(Rele.getReleStatus(i) == STATUS_OFF)
-			Display.fillCircle(IconsXPos + (i * (2 + 4)), 4, 2, TFT_RED);
+			Display.fillCircle(IconsXPos + (i * (2 + 4)), 6, 2, TFT_RED);
 		else
-			Display.fillCircle(IconsXPos + (i * (2 + 4)), 4, 2, TFT_GREEN);
+			Display.fillCircle(IconsXPos + (i * (2 + 4)), 6, 2, TFT_GREEN);
 	}
+	if(EnableSimulation)
+		Display.drawString("DEMO", IconsXPos + 65, TOP_POS);
 }
 
 static void DrawPageChange(int8_t Page, bool Selected)
 {
-	int32_t XPos = CENTER_POS(DisplayPages[Page].PageName), YPos = BOTTOM_POS(DisplayPages[Page].PageName);
 	
 	Display.setFreeFont(FMB9);	
-	Display.fillRect( 0,  Display.height() - Display.fontHeight() - 4,  Display.width(),  14 , BG_COLOR);
+	int32_t XPos = CENTER_POS(DisplayPages[Page].PageName), YPos = BOTTOM_POS(DisplayPages[Page].PageName);
+	Display.fillRect( 0,  Display.height() - Display.fontHeight() - 4,  Display.width(),  23 , BG_COLOR);
 	Display.drawString((String)DisplayPages[Page].PageName, XPos, YPos);
 	if(Selected)
 		Display.drawRoundRect( XPos - 2,  YPos - 2,  Display.textWidth((String)DisplayPages[Page].PageName) + 4,  Display.fontHeight() + 2,  2,  TFT_WHITE);
@@ -359,7 +361,7 @@ static void RefreshMeasurePage(uint8_t MeasurePageNumber)
 	bool Refactor = true;
 	Title = String(MeasureUdmLabel[MeasurePageNumber].PageTitle);
 	Display.setFreeFont(FM12);
-	Display.drawString(Title, CENTER_POS(Title), 14);		
+	Display.drawString(Title, CENTER_POS(Title), 24);		
 	for(int Line = 0; Line < MEASURE_IN_PAGE; Line++)
 	{
 		double ActualMeasure = 0.0;
@@ -407,6 +409,8 @@ static void RefreshMeasurePage(uint8_t MeasurePageNumber)
 		Display.drawString(UdmRF, RIGHT_POS(UdmRF), 70 + (Line * (50)));	
 		Display.drawString(Label, LEFT_POS, 70 + (Line * (50)));	
 	}
+	if(RefreshMeasurePageTimer.hasPassed(2000, true))
+		Display.fillRect( 30,  73,  Display.width() - 30,  126  , BG_COLOR);
 	Display.setFreeFont(FM9);
 	String MeasurePageNumberStr = String(MeasurePageNumber + 1) + "/" + String(MAX_MEASURE_PAGES);
 	Display.drawString(MeasurePageNumberStr, CENTER_POS(MeasurePageNumberStr), 200);
@@ -514,8 +518,8 @@ static void DrawRelePage()
 				}
 				else
 					DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
-				RefreshBottomBar = true;
 			}
+			RefreshBottomBar = true;
 			break;
 		case B_DOWN:
 			if(RelePageItemSel == CHANGE_RELE_STATUS_ITEM)
@@ -534,8 +538,8 @@ static void DrawRelePage()
 				}
 				else
 					DisplayPages[ActualPage].PageToChange = 0;
-				RefreshBottomBar = true;
 			}
+			RefreshBottomBar = true;
 			break;
 		case B_LEFT:
 			if(RelePageItemSel < MAX_RELE_PAGE_ITEMS - 1)
@@ -629,12 +633,16 @@ static void ModifyAlarm(uint8_t AlarmItem)
 {
 	bool ExitModifyAlarm = false;
 	uint8_t ItemToModify = 0;
-	bool Enabled = false, Disconnect = false;
+	bool Enabled = false, Disconnect = false, Refresh = false;
 	String DisabledStr = "", DisconnectStr = "";
-	ExitLoopTimeout.restart();
+	uint16_t ExitCnt = 0;
 	while(!ExitModifyAlarm)
 	{
-		ClearScreen(false);
+		if(Refresh)
+		{
+			ClearScreen(false);
+			Refresh = false;
+		}
 		DrawTopInfoBar();
 		if(ItemToModify == 0)
 		{
@@ -676,7 +684,8 @@ static void ModifyAlarm(uint8_t AlarmItem)
 				{
 					Disconnect = !Disconnect;
 				}
-				ExitLoopTimeout.restart();
+				Refresh = true;
+				ExitCnt = 0;
 				break;
 			case B_DOWN:
 				if(ItemToModify == 0)
@@ -687,14 +696,16 @@ static void ModifyAlarm(uint8_t AlarmItem)
 				{
 					Disconnect = !Disconnect;
 				}
-				ExitLoopTimeout.restart();
+				Refresh = true;
+				ExitCnt = 0;
 				break;
 			case B_LEFT:
 				if(ItemToModify < 1)
 					ItemToModify++;
 				else
 					ItemToModify = 0;
-				ExitLoopTimeout.restart();
+				Refresh = true;
+				ExitCnt = 0;
 				break;
 			case B_OK:
 				if(ItemToModify == 0)
@@ -707,14 +718,14 @@ static void ModifyAlarm(uint8_t AlarmItem)
 				}
 				ClearScreen(false);
 				ExitModifyAlarm = true;
-				ExitLoopTimeout.stop();
 				break;
 			default:
 				break;
 		}
-		if(ExitLoopTimeout.hasPassed(5, true))
+		ExitCnt++;
+		if(ExitCnt == 125)
 			ExitModifyAlarm = true;
-		delay(50);
+		delay(80);
 	}
 }
 
@@ -741,8 +752,9 @@ static void DrawAlarmSetupPage()
 				}
 				else
 					DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
-				RefreshBottomBar = true;
+				
 			}	
+			RefreshBottomBar = true;
 			break;
 		case B_DOWN:
 			if(AlarmOrPage == ALARM_SELECTION)
@@ -761,8 +773,8 @@ static void DrawAlarmSetupPage()
 				}
 				else
 					DisplayPages[ActualPage].PageToChange = 0;
-				RefreshBottomBar = true;
 			}
+			RefreshBottomBar = true;
 			break;
 		case B_LEFT:
 			if(AlarmOrPage < MAX_RESET_PAGE_ITEMS - 1)
@@ -957,9 +969,9 @@ static void RefreshDemoAct(uint8_t DemoActItem, bool ChangeStatusSel, bool *Refr
 	Display.drawString(DemoStr, CENTER_POS(DemoStr), 70);
 	Display.setTextColor(TFT_WHITE);
 	if(ChangeStatusSel)
-		Display.drawRoundRect( 0,  70 - 4,  Display.textWidth(DemoStr),  (Display.fontHeight() + 4),  2,  TFT_WHITE);
+		Display.drawRoundRect( CENTER_POS(DemoStr) - 4,  70 - 4,  Display.textWidth(DemoStr) + 4,  (Display.fontHeight() + 4),  2,  TFT_WHITE);
 	else                                                                           
-		Display.drawRoundRect( 0,  70 - 4,  Display.textWidth(DemoStr),  (Display.fontHeight() + 4),  2,  BG_COLOR);
+		Display.drawRoundRect( CENTER_POS(DemoStr) - 4,  70 - 4,  Display.textWidth(DemoStr) + 4,  (Display.fontHeight() + 4),  2,  BG_COLOR);
 }
 
 
@@ -1026,12 +1038,12 @@ static void DrawDemoActPage()
 				if(DemoIndex == 0)
 				{
 					EnableSimulation = false;
-					DrawPopUp("DEMO DISABILITATO");
+					DrawPopUp("DEMO OFF", 1500);
 				}
 				else
 				{
 					EnableSimulation = true;
-					DrawPopUp("DEMO ABILITATO");
+					DrawPopUp("DEMO ON", 1500);
 				}	
 				RefreshBottomBar = true;
 				RefreshDemoChange = true;

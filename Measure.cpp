@@ -52,7 +52,7 @@ ADS1115 AnalogBoard(ADS1115_DEFAULT_ADDRESS);
 
 Chrono CalcEnergyTimer;
 
-bool EnableSimulation = true;
+bool EnableSimulation = true, OldEnableSim = true;
 
 double   AdcCurrentValues[ADC_SAMPLE], AdcVoltageValues[ADC_SAMPLE], AdcSearchZeroValues[ADC_SAMPLE], CurrentRmsAcc, VoltageRmsAcc, ActivePowerRmsAcc;
 uint32_t EnergyAccumulatorCnt, AvgCounter;
@@ -99,11 +99,11 @@ static void CalcMaxMinAvg()
 	if(Measures.ReactivePower < Measures.MaxMinAvg.MinReactivePower)
 		Measures.MaxMinAvg.MinReactivePower = Measures.ReactivePower;
 	
-	if(Measures.ApparentEnergy > Measures.MaxMinAvg.MaxApparentPower)
-		Measures.MaxMinAvg.MaxApparentPower = Measures.ApparentEnergy;
+	if(Measures.ApparentPower > Measures.MaxMinAvg.MaxApparentPower)
+		Measures.MaxMinAvg.MaxApparentPower = Measures.ApparentPower;
 	
-	if(Measures.ApparentEnergy < Measures.MaxMinAvg.MinApparentPower)
-		Measures.MaxMinAvg.MinApparentPower = Measures.ApparentEnergy;
+	if(Measures.ApparentPower < Measures.MaxMinAvg.MinApparentPower)
+		Measures.MaxMinAvg.MinApparentPower = Measures.ApparentPower;
 	
 	if(Measures.PowerFactor > Measures.MaxMinAvg.MaxPowerFactor)
 		Measures.MaxMinAvg.MaxPowerFactor = Measures.PowerFactor;
@@ -237,6 +237,7 @@ static void CalcMeasure()
 			AnalogBoard.setMultiplexer(ADC_VOLTAGE_EXIT);
 			AdcVoltageValues[Sample] = AnalogBoard.getVolts(true) - VOLTAGE_VOLT_CORRECTION;
 			delayMicroseconds(1200);
+			DBG(AdcVoltageValues[Sample]);
 			AnalogBoard.setMultiplexer(ADC_CURRENT_EXIT);
 			AdcCurrentValues[Sample] = AnalogBoard.getVolts(true);
 			delayMicroseconds(1200);
@@ -268,6 +269,7 @@ static void CalcMeasure()
 					Measures.CurrentRMS = 0.0;
 				if(Measures.VoltageRMS <= TARP_VOLTAGE)
 					Measures.VoltageRMS = 0.0;
+				Measures.ActivePower = 0.0;
 				Measures.ApparentPower = 0.0;
 				Measures.ReactivePower = 0.0;
 				Measures.PowerFactor = INVALID_PF_VALUE;
@@ -313,6 +315,25 @@ static void CalcEnergy()
 	}
 	
 }
+
+static void ResetMeasure()
+{
+Measures.CurrentRMS            = 0.0;
+Measures.VoltageRMS   	       = 0.0;
+Measures.ApparentPower		   = 0.0;
+Measures.ActivePower           = 0.0;
+Measures.ReactivePower         = 0.0;
+Measures.ApparentEnergy		   = 0.0;
+Measures.ActiveEnergy   	   = 0.0;	     
+Measures.ReactiveEnergy 	   = 0.0;	
+Measures.PartialApparentEnergy = 0.0;	
+Measures.PartialActiveEnergy   = 0.0;	
+Measures.PartialReactiveEnergy = 0.0;	
+Measures.PowerFactor		   = 0.0;	
+	
+}
+
+
 
 void ResetTotalEnergy()
 {
@@ -365,4 +386,9 @@ void TaskMeasure()
 		CalcSimCurrentVoltage(false);
 
 	CalcEnergy();	
+	if(OldEnableSim != EnableSimulation)
+	{
+		OldEnableSim = EnableSimulation;
+		ResetMeasure();
+	}
 }
