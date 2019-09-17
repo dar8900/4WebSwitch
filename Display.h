@@ -14,12 +14,6 @@ typedef enum
 	MAX_PAGES 			  // 8
 }MAIN_PAGES;
 
-typedef struct
-{
-	int8_t PageToChange;
-	const char *PageName;
-	
-}PAGE_DESCRIPTOR;
 
 
 

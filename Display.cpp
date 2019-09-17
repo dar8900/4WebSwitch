@@ -21,40 +21,12 @@
 
 #define MEASURE_IN_PAGE 	3
 
+#define REFRESH_DELAY		500
+#define LOOPS_DELAY		     50
+
 TFT_eSPI Display = TFT_eSPI();
 
-
-Chrono RefreshTopbarTimer, RefreshMeasurePageTimer;
-Chrono ExitLoopTimeout(Chrono::SECONDS);
-
-enum
-{
-	CHANGE_RELE_STATUS_ITEM = 0,
-	CHANGE_PAGE_ITEM,
-	MAX_RELE_PAGE_ITEMS
-};
-
-enum
-{
-	ALARM_SELECTION = 0,
-	PAGE_ALARM_SEL,
-	MAX_ALARM_PAGE_ITEM
-};
-
-
-enum
-{
-	RESET_SELECTION = 0,
-	PAGE_RESET_SEL,
-	MAX_RESET_PAGE_ITEMS
-};
-
-enum
-{
-	CHANGE_DEMO_STATUS_ITEM = 0,
-	CHANGE_PAGE_DEMO_ITEM,
-	MAX_DEMO_PAGE_ITEMS	
-};
+Chrono RefreshPage;
 
 
 const unsigned char *WifiIcons[] = 
@@ -65,46 +37,46 @@ const unsigned char *WifiIcons[] =
 	Ottimo_bits,
 };
 
-PAGE_DESCRIPTOR DisplayPages[MAX_PAGES] = 
+const char * DisplayPages[MAX_PAGES] = 
 {
-	{MAIN_PAGE   		, "Home"          },
-	{MEASURE_PAGE       , "Misure"        },
-	{RELE_PAGE          , "Rele"          },
-	{SETUP_PAGE         , "Setup"         },
-	{ALARM_SETUP_PAGE   , "Setup allarmi" },
-	{ALARM_STATUS_PAGE  , "Allarmi"       },
-	{RESET_PAGE         , "Reset"         },
-	{DEMO_MODE          , "Demo"          },
+	"Home"          ,
+	"Misure"        ,
+	"Rele"          ,
+	"Setup"         ,
+	"Setup allarmi" ,
+	"Allarmi"       ,
+	"Reset"         ,
+	"Demo"          ,
 };
 
 const MEASURE_PAGES MeasuresPage[MAX_MEASURE_PAGES] = 
 {
 	{&Measures.CurrentRMS, 			     &Measures.VoltageRMS, 			       &Measures.PowerFactor	   	       , true, true, false},
-	{&Measures.ActivePower, 		     &Measures.ReactivePower,			   &Measures.ApparentPower			   , true, true, true},
-	{&Measures.ActiveEnergy, 	         &Measures.ReactiveEnergy, 			   &Measures.ApparentEnergy		       , true, true, true},
-	{&Measures.PartialActiveEnergy,      &Measures.PartialReactiveEnergy, 	   &Measures.PartialApparentEnergy	   , true, true, true},
+	{&Measures.ActivePower, 		     &Measures.ReactivePower,			   &Measures.ApparentPower			   , true, true, true },
+	{&Measures.ActiveEnergy, 	         &Measures.ReactiveEnergy, 			   &Measures.ApparentEnergy		       , true, true, true },
+	{&Measures.PartialActiveEnergy,      &Measures.PartialReactiveEnergy, 	   &Measures.PartialApparentEnergy	   , true, true, true },
 	{&Measures.MaxMinAvg.MaxCurrent,     &Measures.MaxMinAvg.MaxVoltage, 	   &Measures.MaxMinAvg.MaxPowerFactor  , true, true, false},
-	{&Measures.MaxMinAvg.MaxActivePower, &Measures.MaxMinAvg.MaxReactivePower, &Measures.MaxMinAvg.MaxApparentPower, true, true, true},
+	{&Measures.MaxMinAvg.MaxActivePower, &Measures.MaxMinAvg.MaxReactivePower, &Measures.MaxMinAvg.MaxApparentPower, true, true, true },
 	{&Measures.MaxMinAvg.MinCurrent,     &Measures.MaxMinAvg.MinVoltage, 	   &Measures.MaxMinAvg.MinPowerFactor  , true, true, false},
-	{&Measures.MaxMinAvg.MinActivePower, &Measures.MaxMinAvg.MinReactivePower, &Measures.MaxMinAvg.MinApparentPower, true, true, true},
+	{&Measures.MaxMinAvg.MinActivePower, &Measures.MaxMinAvg.MinReactivePower, &Measures.MaxMinAvg.MinApparentPower, true, true, true },
 	{&Measures.MaxMinAvg.CurrentAvg,     &Measures.MaxMinAvg.VoltageAvg, 	   &Measures.MaxMinAvg.PowerFactorAvg  , true, true, false},
-	{&Measures.MaxMinAvg.ActivePowerAvg, &Measures.MaxMinAvg.ReactivePowerAvg, &Measures.MaxMinAvg.ApparentPowerAvg, true, true, true},
+	{&Measures.MaxMinAvg.ActivePowerAvg, &Measures.MaxMinAvg.ReactivePowerAvg, &Measures.MaxMinAvg.ApparentPowerAvg, true, true, true },
 	
 };
 
 
 const MEASURE_PAGE_LABEL_DES MeasureUdmLabel[MAX_MEASURE_PAGES] PROGMEM = 
 {
-	{"I, V, PF"        , "A" , "V"   , " "  , "I"     , "V"     , " PF"   },
-	{"Potenze"	       , "W" , "VAr" , "VA" , "P.att" , "P.rea" , "P.app" },
-	{"Energie tot."    , "Wh", "VArh", "VAh", "E.att" , "E.rea" , "E.app" },
-	{"Energie parz."   , "Wh", "VArh", "VAh", "EP att", "EPrea" , "EPapp" },
-	{"Massimi I, V, PF", "A" , "V"   , " "  , "Max I" , "Max V" , "MaxPF" },
-	{"Massimi potenze" , "W" , "VAr" , "VA" , "MaxPat", "MaxPre", "MaxPap"},
-	{"Minimi I, V, PF" , "A" , "V"   , " "  , "Min I" , "Min V" , "MinPF" },
-	{"Minimi potenze"  , "W" , "VAr" , "VA" , "MinPat", "MinPre", "MinPap"},
-	{"Medie I, V, PF"  , "A" , "V"   , " "  , "Avg I" , "Avg V" , "AvgPF" },
-	{"Medie potenze"   , "W" , "VAr" , "VA" , "AvgPat", "AvgPre", "AvgPap"},
+	{"I, V, PF"        , "A" , "V"   , " "  , "I"     , "V"      , " PF"     },
+	{"Potenze"	       , "W" , "VAr" , "VA" , "P.att" , "P.rea"  , "P.app"   },
+	{"Energie tot."    , "Wh", "VArh", "VAh", "E.att" , "E.rea"  , "E.app"   },
+	{"Energie parz."   , "Wh", "VArh", "VAh", "EP Att", "EP Rea" , "EP App"  },
+	{"Massimi I, V, PF", "A" , "V"   , " "  , "Max I" , "Max V"  , "MaxPF"   },
+	{"Massimi potenze" , "W" , "VAr" , "VA" , "MaxPat", "MaxPre" , "MaxPap"  },
+	{"Minimi I, V, PF" , "A" , "V"   , " "  , "Min I" , "Min V"  , "MinPF"   },
+	{"Minimi potenze"  , "W" , "VAr" , "VA" , "MinPat", "MinPre" , "MinPap"  },
+	{"Medie I, V, PF"  , "A" , "V"   , " "  , "Avg I" , "Avg V"  , "AvgPF"   },
+	{"Medie potenze"   , "W" , "VAr" , "VA" , "AvgPat", "AvgPre" , "AvgPap"  },
 	
 };
 
@@ -139,31 +111,8 @@ const RESET_S Reset[MAX_RESET_ITEMS] =
 };
 
 
-static uint8_t 	ButtonPress;
-static bool 	SelPageSelected = true;
+static uint8_t 	ButtonPress = NO_PRESS;
 static uint8_t 	ActualPage = MAIN_PAGE;
-static bool     RefreshBottomBar = true, PageChanged = false;
-
-static uint8_t 	MeasurePageSelection = LINE_MEASURES;
-static String   MeasurePageNumber = "";
-static bool 	MeasurePageChanged = false;
-
-static uint8_t 	RelePageItemSel;
-static uint8_t 	ReleIndex;
-static bool     RefreshReleChange = false;
-
-static uint8_t  AlarmOrPage = ALARM_SELECTION;
-static uint8_t  AlarmItem = CURRENT;
-static bool     RefreshAlarmItem = false;
-
-static uint8_t  ResetOrPage = RESET_SELECTION;
-static uint8_t  ResetItem = RESET_ENERGIES;
-static bool     RefreshResetItem = false;
-
-static uint8_t 	DemoItemSel;
-static uint8_t 	DemoIndex = 1;
-static bool     RefreshDemoChange = false;
-
 
 
 void DisplayInit()
@@ -172,6 +121,43 @@ void DisplayInit()
 	Display.setRotation(3);
 	Display.fillScreen(BG_COLOR);  
 }
+
+static void TaskManagement()
+{
+	TaskMeasure();
+	TaskAlarm();
+	TaskWeb();
+	RefreshReleStatistics();
+}
+
+
+static void WichReset(uint8_t ResetItem)
+{
+	switch(ResetItem)
+	{
+		case RESET_ENERGIES:
+			ResetTotalEnergy();
+			break;
+		case RESET_PAR_ENERGIES:
+			ResetPartialEnergy();
+			break;
+		case RESET_MAX_MIN:
+			ResetMaxMin();
+			break;
+		case RESET_AVG:
+			ResetAvg();
+			break;
+		case RESET_N_ALARMS:
+			ResetAlarms();
+			break;
+		case RESTART_MCU:
+			ResetMcu();
+			break;
+		default:
+			break;
+	}
+}
+
 
 static void ClearScreen(bool FullScreen)
 {
@@ -190,7 +176,7 @@ void DrawPopUp(const char *Text, uint16_t Delay)
 	String TextStr = String(Text);
 	ClearScreen(true);
 	Display.setFreeFont(FMB12);
-	Display.drawRoundRect(0, 14, Display.width(), Display.height() - 14, 2, TFT_WHITE);
+	Display.drawRoundRect(0, 0, Display.width(), Display.height(), 5, TFT_WHITE);
 	Display.drawString(TextStr, CENTER_POS(TextStr), (Display.height() - Display.fontHeight())/2);
 	delay(Delay);
 	ClearScreen(true);
@@ -223,47 +209,12 @@ static void DrawPageChange(int8_t Page, bool Selected)
 {
 	
 	Display.setFreeFont(FMB9);	
-	int32_t XPos = CENTER_POS(DisplayPages[Page].PageName), YPos = BOTTOM_POS(DisplayPages[Page].PageName);
+	int32_t XPos = CENTER_POS(DisplayPages[Page]), YPos = BOTTOM_POS(DisplayPages[Page]);
 	Display.fillRect( 0,  Display.height() - Display.fontHeight() - 4,  Display.width(),  23 , BG_COLOR);
-	Display.drawString((String)DisplayPages[Page].PageName, XPos, YPos);
+	Display.drawString((String)DisplayPages[Page], XPos, YPos);
 	if(Selected)
-		Display.drawRoundRect( XPos - 2,  YPos - 2,  Display.textWidth((String)DisplayPages[Page].PageName) + 4,  Display.fontHeight() + 2,  2,  TFT_WHITE);
-	else
-		Display.drawRoundRect( XPos - 2,  YPos - 2,  Display.textWidth((String)DisplayPages[Page].PageName) + 4,  Display.fontHeight() + 2,  2,  BG_COLOR);
-	Display.drawString((String)DisplayPages[Page].PageName, XPos, YPos);
-}
-
-static void CheckBottomPageSelected(uint8_t PageToGo)
-{
-	switch(PageToGo)
-	{
-		case MAIN_PAGE:
-			SelPageSelected = true;
-			break;
-		case MEASURE_PAGE:
-			SelPageSelected = true;
-			break;
-		case RELE_PAGE:
-			SelPageSelected = false;
-			break;
-		case SETUP_PAGE: 
-			SelPageSelected = true;
-			break;
-		case ALARM_SETUP_PAGE: 
-			SelPageSelected = true;
-			break;
-		case ALARM_STATUS_PAGE:
-			SelPageSelected = true;
-			break;
-		case RESET_PAGE:
-			SelPageSelected = false;
-			break;
-		case DEMO_MODE:
-			SelPageSelected = false;
-			break;
-		default:
-			break;
-	}
+		Display.drawRoundRect( XPos - 2,  YPos - 2,  Display.textWidth((String)DisplayPages[Page]) + 4,  Display.fontHeight() + 2,  2,  TFT_WHITE);
+	Display.drawString((String)DisplayPages[Page], XPos, YPos);
 }
 
 static void DrawReleStatus()
@@ -291,47 +242,37 @@ static void DrawReleStatus()
 
 static void DrawMainScreen()
 {
-	Display.setFreeFont(FMB12);
-	DrawReleStatus();
-	ButtonPress = CheckButtons();
-	switch(ButtonPress)
+	bool ExitMainScreen = false;
+	while(!ExitMainScreen)
 	{
-		case B_UP:
-			if(DisplayPages[ActualPage].PageToChange > 0)
-			{
-				DisplayPages[ActualPage].PageToChange--;
-			}
-			else
-				DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
-			RefreshBottomBar = true;
-			break;
-		case B_DOWN:
-			if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
-			{
-				DisplayPages[ActualPage].PageToChange++;
-			}
-			else
-				DisplayPages[ActualPage].PageToChange = 0;
-			RefreshBottomBar = true;
-			break;
-		case B_LEFT:
-			if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
-			{
-				DisplayPages[ActualPage].PageToChange++;
-			}
-			else
-				DisplayPages[ActualPage].PageToChange = 0;
-			RefreshBottomBar = true;
-			break;			
-		case B_OK:
-			ActualPage = DisplayPages[ActualPage].PageToChange;
-			CheckBottomPageSelected(ActualPage);
-			PageChanged = true;
-			break;
-		default:
-			break;
+		TaskManagement();
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearScreen(true);
+		DrawTopInfoBar();
+		DrawPageChange(ActualPage, true);
+		DrawReleStatus();
+		ButtonPress = CheckButtons();
+		switch(ButtonPress)
+		{
+			case B_UP:
+				break;
+			case B_DOWN:
+				break;
+			case B_LEFT:
+				if(ActualPage < MAX_PAGES - 1)
+					ActualPage++;
+				else
+					ActualPage = MAIN_PAGE;
+				break;			
+			case B_OK:
+				ExitMainScreen = true;
+				RefreshPage.stop();
+				break;
+			default:
+				break;
+		}
+		delay(LOOPS_DELAY);
 	}
-
 }
 
 static uint8_t SearchRange(double Value)
@@ -409,8 +350,6 @@ static void RefreshMeasurePage(uint8_t MeasurePageNumber)
 		Display.drawString(UdmRF, RIGHT_POS(UdmRF), 70 + (Line * (50)));	
 		Display.drawString(Label, LEFT_POS, 70 + (Line * (50)));	
 	}
-	if(RefreshMeasurePageTimer.hasPassed(2000, true))
-		Display.fillRect( 30,  73,  Display.width() - 30,  126  , BG_COLOR);
 	Display.setFreeFont(FM9);
 	String MeasurePageNumberStr = String(MeasurePageNumber + 1) + "/" + String(MAX_MEASURE_PAGES);
 	Display.drawString(MeasurePageNumberStr, CENTER_POS(MeasurePageNumberStr), 200);
@@ -419,64 +358,52 @@ static void RefreshMeasurePage(uint8_t MeasurePageNumber)
 
 static void DrawMeasurePage()
 {
-	RefreshMeasurePage(MeasurePageSelection);
-	ButtonPress = CheckButtons();
-	switch(ButtonPress)
+	uint8_t MeasurePage = 0;
+	bool ExitMeasurePage = false;
+	RefreshPage.restart();
+	while(!ExitMeasurePage)
 	{
-		case B_UP:
-			if(MeasurePageSelection > LINE_MEASURES)
-			{
-				MeasurePageSelection--;
-			}
-			else
-				MeasurePageSelection = MAX_MEASURE_PAGES - 1;
-			MeasurePageChanged = true;
-			break;
-		case B_DOWN:
-			if(MeasurePageSelection < MAX_MEASURE_PAGES - 1)
-			{
-				MeasurePageSelection++;
-			}
-			else
-				MeasurePageSelection = LINE_MEASURES;
-			MeasurePageChanged = true;
-			break;
-		case B_LEFT:
-			if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
-			{
-				DisplayPages[ActualPage].PageToChange++;
-			}
-			else
-				DisplayPages[ActualPage].PageToChange = 0;
-			RefreshBottomBar = true;
-			break;		
-		case B_OK:
-			MeasurePageSelection = LINE_MEASURES;
-			MeasurePageNumber = "";
-			ActualPage = DisplayPages[ActualPage].PageToChange;
-			CheckBottomPageSelected(ActualPage);
-			PageChanged = true;
-			break;
-		default:
-			break;
-	}
-	if(MeasurePageChanged)
-	{
-		RefreshBottomBar = true;
-		MeasurePageChanged = false;
-		ClearScreen(false);
+		TaskManagement();
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearScreen(true);
+		DrawTopInfoBar();
+		DrawPageChange(ActualPage, true);
+		RefreshMeasurePage(MeasurePage);
+		ButtonPress = CheckButtons();
+		switch(ButtonPress)
+		{
+			case B_UP:
+				if(MeasurePage > 0)
+					MeasurePage--;
+				else
+					MeasurePage = MAX_MEASURE_PAGES - 1;
+				break;
+			case B_DOWN:
+				if(MeasurePage < MAX_MEASURE_PAGES - 1)
+					MeasurePage++;
+				else
+					MeasurePage = 0;
+				break;
+			case B_LEFT:
+				if(ActualPage < MAX_PAGES - 1)
+					ActualPage++;
+				else
+					ActualPage = MAIN_PAGE;	
+				break;		
+			case B_OK:
+				RefreshPage.stop();
+				ExitMeasurePage = true;
+				break;
+			default:
+				break;
+		}
+		delay(LOOPS_DELAY);
 	}
 }
 
-static void RefreshReleChangeStatus(uint8_t releIndex, bool ChangeStatusSel, bool *RefreshReleChange)
+static void RefreshReleChangeStatus(uint8_t releIndex, bool ReleStatusSelected)
 {
 	String ReleName = "Presa " + String(releIndex + 1), Status = "SPENTA";
-	if(*RefreshReleChange)
-	{
-		Display.fillRoundRect( 0,  64,  Display.width(),  (Display.fontHeight() * 2) + 14,  2,  BG_COLOR);
-		*RefreshReleChange = false;
-	}
-	ChangeStatusSel = !ChangeStatusSel;
 	Display.setFreeFont(FMB18);
 	Display.drawString(ReleName, CENTER_POS(ReleName), 68);
 	if(Rele.getReleStatus(releIndex) == STATUS_ON)
@@ -488,142 +415,109 @@ static void RefreshReleChangeStatus(uint8_t releIndex, bool ChangeStatusSel, boo
 		Display.setTextColor(TFT_RED);
 	Display.drawString(Status, CENTER_POS(Status), 68 + Display.fontHeight() + 10);
 	Display.setTextColor(TFT_WHITE);
-	if(ChangeStatusSel)
+	if(ReleStatusSelected)
 		Display.drawRoundRect( 0,  64,  Display.width(),  (Display.fontHeight() * 2) + 16,  2,  TFT_WHITE);
-	else                                                                                
-		Display.drawRoundRect( 0,  64,  Display.width(),  (Display.fontHeight() * 2) + 16,  2,  BG_COLOR);
+
 }
 
 
 static void DrawRelePage()
 {
-	RefreshReleChangeStatus(ReleIndex, SelPageSelected, &RefreshReleChange);
-	ButtonPress = CheckButtons();
-	switch(ButtonPress)
+	uint8_t ReleIndex = 0;
+	bool ExitRelePage = false, ReleStatusSelected = false;
+	RefreshPage.restart();
+	while(!ExitRelePage)
 	{
-		case B_UP:
-			if(RelePageItemSel == CHANGE_RELE_STATUS_ITEM)
-			{
-				if(ReleIndex > RELE_1)
-					ReleIndex--;
-				else
-					ReleIndex = N_RELE - 1;
-				RefreshReleChange = true;
-			}
-			else
-			{
-				if(DisplayPages[ActualPage].PageToChange > 0)
+		TaskManagement();
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearScreen(true);
+		DrawTopInfoBar();
+		DrawPageChange(ActualPage, !ReleStatusSelected);		
+		RefreshReleChangeStatus(ReleIndex, ReleStatusSelected);
+		ButtonPress = CheckButtons();
+		switch(ButtonPress)
+		{
+			case B_UP:
+			case B_DOWN:
+				ReleStatusSelected = !ReleStatusSelected;
+				break;
+			case B_LEFT:
+				if(ReleStatusSelected)
 				{
-					DisplayPages[ActualPage].PageToChange--;
+					if(ReleIndex < N_RELE - 1)
+						ReleIndex++;
+					else
+						ReleIndex = RELE_1;
 				}
 				else
-					DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
-			}
-			RefreshBottomBar = true;
-			break;
-		case B_DOWN:
-			if(RelePageItemSel == CHANGE_RELE_STATUS_ITEM)
-			{
-				if(ReleIndex < N_RELE - 1)
-					ReleIndex++;
-				else
-					ReleIndex = RELE_1;
-				RefreshReleChange = true;
-			}
-			else
-			{
-				if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
 				{
-					DisplayPages[ActualPage].PageToChange++;
+					if(ActualPage < MAX_PAGES - 1)
+						ActualPage++;
+					else
+						ActualPage = MAIN_PAGE;	
+				}
+				break;				
+			case B_OK:
+				if(ReleStatusSelected)
+				{
+					ToggleRele(ReleIndex);
 				}
 				else
-					DisplayPages[ActualPage].PageToChange = 0;
-			}
-			RefreshBottomBar = true;
-			break;
-		case B_LEFT:
-			if(RelePageItemSel < MAX_RELE_PAGE_ITEMS - 1)
-				RelePageItemSel++;
-			else
-				RelePageItemSel = 0;
-			if(RelePageItemSel == CHANGE_RELE_STATUS_ITEM)
-				SelPageSelected = false;
-			else
-				SelPageSelected = true;
-			RefreshBottomBar = true;
-			break;				
-		case B_OK:
-			if(RelePageItemSel == CHANGE_RELE_STATUS_ITEM)
-			{
-				ToggleRele(ReleIndex);
-				RefreshReleChange = true;
-			}
-			else
-			{
-				ReleIndex = RELE_1;
-				RelePageItemSel = CHANGE_RELE_STATUS_ITEM;
-				ActualPage = DisplayPages[ActualPage].PageToChange;
-				CheckBottomPageSelected(ActualPage);
-				PageChanged = true;
-			}
-			break;
-		default:
-			break;
+				{
+					RefreshPage.stop();
+					ExitRelePage = true;
+				}	
+				break;
+			default:
+				break;
+		}
+		delay(LOOPS_DELAY);
 	}
-
 }
 
 static void DrawSetupPage()
 {
-
-	ButtonPress = CheckButtons();
-	switch(ButtonPress)
+	bool ExitSetupPage = false;
+	while(!ExitSetupPage)
 	{
-		case B_UP:
-			if(DisplayPages[ActualPage].PageToChange > 0)
-			{
-				DisplayPages[ActualPage].PageToChange--;
-			}
-			else
-				DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
-			RefreshBottomBar = true;
-			break;
-		case B_DOWN:
-			if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
-			{
-				DisplayPages[ActualPage].PageToChange++;
-			}
-			else
-				DisplayPages[ActualPage].PageToChange = 0;
-			RefreshBottomBar = true;
-			break;
-		case B_OK:
-			ActualPage = DisplayPages[ActualPage].PageToChange;
-			CheckBottomPageSelected(ActualPage);
-			PageChanged = true;
-			break;
-		default:
-			break;
-	}
+		TaskManagement();
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearScreen(true);
+		DrawTopInfoBar();
+		DrawPageChange(ActualPage, true);	
+		ButtonPress = CheckButtons();
+		switch(ButtonPress)
+		{
+			case B_UP:
 
+				break;
+			case B_DOWN:
+
+				break;
+			case B_LEFT:
+				if(ActualPage < MAX_PAGES - 1)
+					ActualPage++;
+				else
+					ActualPage = 0;		
+				break;
+			case B_OK:
+				ExitSetupPage = true;
+				break;
+			default:
+				break;
+		}
+		delay(LOOPS_DELAY);
+	}
 }
 
 
-static void RefreshAlarmSetupList(uint8_t AlarmItem, bool AlarmSelected, bool *RefreshAlarmItem)
+static void RefreshAlarmSetupList(uint8_t AlarmItem, bool AlarmSelected)
 {
 	String AlarmItemName = String(AlarmsName[AlarmItem]), AlarmNumber = "";
-	AlarmSelected = !AlarmSelected;
-	if(*RefreshAlarmItem)
-	{
-		ClearScreen(false);
-		*RefreshAlarmItem = false;
-	}
 	Display.setFreeFont(FMB12);
 	Display.drawString(AlarmItemName, CENTER_POS(AlarmItemName), 104);
 	if(AlarmSelected)
 		Display.drawRoundRect( CENTER_POS(AlarmItemName) - 4,  104  - 4,  Display.textWidth(AlarmItemName) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
-	else
-		Display.drawRoundRect( CENTER_POS(AlarmItemName) - 4,  104  - 4,  Display.textWidth(AlarmItemName) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
 	Display.setFreeFont(FM9);
 	AlarmNumber = String(AlarmItem + 1) + "/" + String(MAX_ALARM);
 	Display.drawString(AlarmNumber, CENTER_POS(AlarmNumber), 200);
@@ -731,135 +625,101 @@ static void ModifyAlarm(uint8_t AlarmItem)
 
 static void DrawAlarmSetupPage()
 {
-	RefreshAlarmSetupList(AlarmItem, SelPageSelected, &RefreshAlarmItem);
-	ButtonPress = CheckButtons();
-	switch(ButtonPress)
+	bool ExitAlarmSetupPage = false, AlarmSelected = false;
+	uint8_t AlarmItem = 0;
+	while(!ExitAlarmSetupPage)
 	{
-		case B_UP:
-			if(AlarmOrPage == ALARM_SELECTION)
-			{
-				if(AlarmItem > CURRENT)
-					AlarmItem--;
-				else
-					AlarmItem = MAX_ALARM - 1;
-				RefreshAlarmItem = true;
-			}
-			else
-			{
-				if(DisplayPages[ActualPage].PageToChange > 0)
+		TaskManagement();
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearScreen(true);
+		DrawTopInfoBar();
+		DrawPageChange(ActualPage, !AlarmSelected);		
+		RefreshAlarmSetupList(AlarmItem, AlarmSelected);
+		ButtonPress = CheckButtons();
+		switch(ButtonPress)
+		{
+			case B_UP:
+			case B_DOWN:
+				AlarmSelected = !AlarmSelected;
+				break;
+			case B_LEFT:
+				if(AlarmSelected)
 				{
-					DisplayPages[ActualPage].PageToChange--;
+					if(AlarmItem < MAX_ALARM - 1)
+						AlarmItem++;
+					else
+						AlarmItem = 0;
 				}
 				else
-					DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
-				
-			}	
-			RefreshBottomBar = true;
-			break;
-		case B_DOWN:
-			if(AlarmOrPage == ALARM_SELECTION)
-			{
-				if(AlarmItem < MAX_ALARM - 1)
-					AlarmItem++;
-				else
-					AlarmItem = CURRENT;
-				RefreshAlarmItem = true;
-			}
-			else
-			{		
-				if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
 				{
-					DisplayPages[ActualPage].PageToChange++;
+					if(ActualPage < MAX_PAGES - 1)
+						ActualPage++;
+					else
+						ActualPage = 0;	
+				}
+				break;
+			case B_OK:
+				if(AlarmSelected)
+				{
+					ModifyAlarm(AlarmItem);
 				}
 				else
-					DisplayPages[ActualPage].PageToChange = 0;
-			}
-			RefreshBottomBar = true;
-			break;
-		case B_LEFT:
-			if(AlarmOrPage < MAX_RESET_PAGE_ITEMS - 1)
-				AlarmOrPage++;
-			else
-				AlarmOrPage = 0;
-			if(AlarmOrPage == ALARM_SELECTION)
-				SelPageSelected = false;
-			else
-				SelPageSelected = true;
-			RefreshBottomBar = true;
-			break;
-		case B_OK:
-			if(AlarmOrPage == ALARM_SELECTION)
-			{
-				ModifyAlarm(AlarmItem);
-				RefreshAlarmItem = true;
-				RefreshBottomBar = true;
-			}
-			else
-			{
-				AlarmItem = 0;
-				RefreshAlarmItem = true;
-				AlarmOrPage = ALARM_SELECTION;
-				ActualPage = DisplayPages[ActualPage].PageToChange;
-				CheckBottomPageSelected(ActualPage);
-				PageChanged = true;
-			}
-			break;
-		default:
-			break;
+				{
+					ExitAlarmSetupPage = true;
+				}
+				break;
+			default:
+				break;
+		}
+		delay(LOOPS_DELAY);
 	}
 
 }
 
 static void DrawAlarmStatusPage()
 {
-	ButtonPress = CheckButtons();
-	switch(ButtonPress)
+	bool ExitAlarmStatusPage = false;
+	while(!ExitAlarmStatusPage)
 	{
-		case B_UP:
-			if(DisplayPages[ActualPage].PageToChange > 0)
-			{
-				DisplayPages[ActualPage].PageToChange--;
-			}
-			else
-				DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
-			RefreshBottomBar = true;
-			break;
-		case B_DOWN:
-			if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
-			{
-				DisplayPages[ActualPage].PageToChange++;
-			}
-			else
-				DisplayPages[ActualPage].PageToChange = 0;
-			RefreshBottomBar = true;
-			break;
-		case B_OK:
-			ActualPage = DisplayPages[ActualPage].PageToChange;
-			CheckBottomPageSelected(ActualPage);
-			PageChanged = true;
-			break;
-		default:
-			break;
+		TaskManagement();
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearScreen(true);
+		DrawTopInfoBar();
+		DrawPageChange(ActualPage, true);			
+		ButtonPress = CheckButtons();
+		switch(ButtonPress)
+		{
+			case B_UP:
+
+				break;
+			case B_DOWN:
+
+				break;
+			case B_LEFT:
+				if(ActualPage < MAX_PAGES - 1)
+					ActualPage++;
+				else
+					ActualPage = 0;		
+				break;
+			case B_OK:
+				ExitAlarmStatusPage = true;
+				break;
+			default:
+				break;
+		}
+		delay(LOOPS_DELAY);
 	}
 
 }
 
 
-static void RefreshResetList(uint8_t ResetItem, bool ResetSelected, bool *RefreshResetItem)
+static void RefreshResetList(uint8_t ResetItem, bool ResetSelected)
 {
 	String ResetItemName = String(Reset[ResetItem].ResetTitle), ResetNumber = "";
-	ResetSelected = !ResetSelected;
-	if(*RefreshResetItem)
-	{
-		ClearScreen(false);
-		*RefreshResetItem = false;
-	}
 	Display.setFreeFont(FMB12);
 	Display.drawString(ResetItemName, CENTER_POS(ResetItemName), 104);
 	if(ResetSelected)
 		Display.drawRoundRect( CENTER_POS(ResetItemName) - 4,  104  - 4,  Display.textWidth(ResetItemName) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
-	else
-		Display.drawRoundRect( CENTER_POS(ResetItemName) - 4,  104  - 4,  Display.textWidth(ResetItemName) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
 	Display.setFreeFont(FM9);
 	ResetNumber = String(ResetItem + 1) + "/" + String(MAX_RESET_ITEMS);
 	Display.drawString(ResetNumber, CENTER_POS(ResetNumber), 200);
@@ -868,96 +728,63 @@ static void RefreshResetList(uint8_t ResetItem, bool ResetSelected, bool *Refres
 
 static void DrawResetPage()
 {
-	RefreshResetList(ResetItem, SelPageSelected, &RefreshResetItem);
-	ButtonPress = CheckButtons();
-	switch(ButtonPress)
+	bool ExitResetPage = false, ResetSelected = false;
+	uint8_t ResetItem = 0;
+	while(!ExitResetPage)
 	{
-		case B_UP:
-			if(ResetOrPage == RESET_SELECTION)
-			{
-				if(ResetItem > RESET_ENERGIES)
-					ResetItem--;
-				else
-					ResetItem = MAX_RESET_ITEMS - 1;
-				RefreshResetItem = true;
-			}
-			else
-			{
-				if(DisplayPages[ActualPage].PageToChange > 0)
+		TaskManagement();
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearScreen(true);
+		DrawTopInfoBar();
+		DrawPageChange(ActualPage, !ResetSelected);
+		RefreshResetList(ResetItem, ResetSelected);
+		ButtonPress = CheckButtons();
+		switch(ButtonPress)
+		{
+			case B_UP:
+			case B_DOWN:
+				ResetSelected = !ResetSelected;
+				break;
+			case B_LEFT:
+				if(ResetSelected)
 				{
-					DisplayPages[ActualPage].PageToChange--;
+					if(ResetItem < MAX_RESET_ITEMS - 1)
+						ResetItem++;
+					else
+						ResetItem = 0;
 				}
 				else
-					DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
-				RefreshBottomBar = true;
-			}
-			break;
-		case B_DOWN:
-			if(ResetOrPage == RESET_SELECTION)
-			{
-				if(ResetItem < MAX_RESET_ITEMS - 1)
-					ResetItem++;
-				else
-					ResetItem = RESET_ENERGIES;
-				RefreshResetItem = true;
-			}
-			else
-			{
-				if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
 				{
-					DisplayPages[ActualPage].PageToChange++;
+					if(ActualPage < MAX_PAGES - 1)
+						ActualPage++;
+					else
+						ActualPage = 0;	
+				}
+				break;
+			case B_OK:
+				if(ResetSelected)
+				{
+					WichReset(ResetItem);
+					DrawPopUp("Reset eseguito", 1500);
 				}
 				else
-					DisplayPages[ActualPage].PageToChange = 0;
-				RefreshBottomBar = true;
-			}
-			break;
-		case B_LEFT:
-			if(ResetOrPage < MAX_RESET_PAGE_ITEMS - 1)
-				ResetOrPage++;
-			else
-				ResetOrPage = 0;
-			if(ResetOrPage == RESET_SELECTION)
-				SelPageSelected = false;
-			else
-				SelPageSelected = true;
-			RefreshBottomBar = true;
-			break;				
-		case B_OK:
-			if(ResetOrPage == RESET_SELECTION)
-			{
-				Reset[ResetItem].ResetFunc();
-				DrawPopUp("Reset riuscito", 2000);
-				RefreshResetItem = true;
-				RefreshBottomBar = true;
-			}
-			else
-			{
-				ResetItem = RESET_ENERGIES;
-				ResetOrPage = RESET_SELECTION;
-				ActualPage = DisplayPages[ActualPage].PageToChange;
-				CheckBottomPageSelected(ActualPage);
-				PageChanged = true;
-			}
-			break;
-		default:
-			break;
+				{
+					ExitResetPage = true;
+				}
+				break;
+			default:
+				break;
+		}
+		delay(LOOPS_DELAY);
 	}
-
 }
 
 
-static void RefreshDemoAct(uint8_t DemoActItem, bool ChangeStatusSel, bool *RefreshDemoAct)
+static void RefreshDemoAct(bool DemoActive, bool ChangeDemoStatus)
 {
 	String DemoStr = "DISABILITATO";
-	if(*RefreshDemoAct)
-	{
-		Display.fillRoundRect( 0,  64,  Display.width(),  (Display.fontHeight() * 2) + 14,  2,  BG_COLOR);
-		*RefreshDemoAct = false;
-	}
-	ChangeStatusSel = !ChangeStatusSel;
 	Display.setFreeFont(FMB18);
-	if(DemoActItem == 0)
+	if(DemoActive)
 	{
 		Display.setTextColor(TFT_RED);
 	}
@@ -968,113 +795,58 @@ static void RefreshDemoAct(uint8_t DemoActItem, bool ChangeStatusSel, bool *Refr
 	}
 	Display.drawString(DemoStr, CENTER_POS(DemoStr), 70);
 	Display.setTextColor(TFT_WHITE);
-	if(ChangeStatusSel)
+	if(ChangeDemoStatus)
 		Display.drawRoundRect( CENTER_POS(DemoStr) - 4,  70 - 4,  Display.textWidth(DemoStr) + 4,  (Display.fontHeight() + 4),  2,  TFT_WHITE);
-	else                                                                           
-		Display.drawRoundRect( CENTER_POS(DemoStr) - 4,  70 - 4,  Display.textWidth(DemoStr) + 4,  (Display.fontHeight() + 4),  2,  BG_COLOR);
 }
 
 
 static void DrawDemoActPage()
 {
-	RefreshDemoAct(DemoIndex, SelPageSelected, &RefreshDemoChange);
-	ButtonPress = CheckButtons();
-	switch(ButtonPress)
+	bool ExitDemoPage = false, ChangeDemoStatus = false;
+	bool DemoActive = EnableSimulation;
+	while(!ExitDemoPage)
 	{
-		case B_UP:
-			if(DemoItemSel == CHANGE_DEMO_STATUS_ITEM)
-			{
-				if(DemoIndex > 0)
-					DemoIndex--;
+		TaskManagement();
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearScreen(true);
+		DrawTopInfoBar();
+		DrawPageChange(ActualPage, !ChangeDemoStatus);		
+		RefreshDemoAct(DemoActive, ChangeDemoStatus);
+		ButtonPress = CheckButtons();
+		switch(ButtonPress)
+		{
+			case B_UP:
+			case B_DOWN:
+				ChangeDemoStatus = !ChangeDemoStatus;
+				break;
+			case B_LEFT:
+				if(ChangeDemoStatus)
+					DemoActive = !DemoActive;
 				else
-					DemoIndex = 1;
-				RefreshDemoChange = true;
-			}
-			else
-			{
-				if(DisplayPages[ActualPage].PageToChange > 0)
 				{
-					DisplayPages[ActualPage].PageToChange--;
+					if(ActualPage < MAX_PAGES - 1)
+						ActualPage++;
+					else
+						ActualPage = 0;						
 				}
+				break;				
+			case B_OK:
+				EnableSimulation = DemoActive;
+				if(DemoActive)
+					DrawPopUp("DEMO ON", 1000);
 				else
-					DisplayPages[ActualPage].PageToChange = MAX_PAGES - 1;
-				RefreshBottomBar = true;
-			}
-			break;
-		case B_DOWN:
-			if(DemoItemSel == CHANGE_RELE_STATUS_ITEM)
-			{
-				if(DemoIndex < 1)
-					DemoIndex++;
-				else
-					DemoIndex = 0;
-				RefreshDemoChange = true;
-			}
-			else
-			{
-				if(DisplayPages[ActualPage].PageToChange < MAX_PAGES - 1)
-				{
-					DisplayPages[ActualPage].PageToChange++;
-				}
-				else
-					DisplayPages[ActualPage].PageToChange = 0;
-				RefreshBottomBar = true;
-			}
-			break;
-		case B_LEFT:
-			if(DemoItemSel < MAX_DEMO_PAGE_ITEMS - 1)
-				DemoItemSel++;
-			else
-				DemoItemSel = 0;
-			if(DemoItemSel == CHANGE_DEMO_STATUS_ITEM)
-				SelPageSelected = false;
-			else
-				SelPageSelected = true;
-			RefreshBottomBar = true;
-			break;				
-		case B_OK:
-			if(DemoItemSel == CHANGE_DEMO_STATUS_ITEM)
-			{
-				if(DemoIndex == 0)
-				{
-					EnableSimulation = false;
-					DrawPopUp("DEMO OFF", 1500);
-				}
-				else
-				{
-					EnableSimulation = true;
-					DrawPopUp("DEMO ON", 1500);
-				}	
-				RefreshBottomBar = true;
-				RefreshDemoChange = true;
-			}
-			else
-			{
-				DemoIndex = 0;
-				DemoItemSel = CHANGE_DEMO_STATUS_ITEM;
-				ActualPage = DisplayPages[ActualPage].PageToChange;
-				CheckBottomPageSelected(ActualPage);
-				PageChanged = true;
-			}
-			break;
-		default:
-			break;
+					DrawPopUp("DEMO OFF", 1000);
+				ExitDemoPage = true;
+				break;
+			default:
+				break;
+		}
+		delay(LOOPS_DELAY);
 	}
-
 }
 
 void TaskDisplay()
 {
-	if(PageChanged)
-	{
-		ClearScreen(true);
-		PageChanged = false;
-		RefreshBottomBar = true;
-	}		
-	if(RefreshTopbarTimer.hasPassed(500, true))
-	{	
-		DrawTopInfoBar();
-	}
 	switch(ActualPage)
 	{
 		case MAIN_PAGE:
@@ -1104,11 +876,5 @@ void TaskDisplay()
 		default:
 			break;
 	}
-	if(RefreshBottomBar)
-	{
-		DrawPageChange(DisplayPages[ActualPage].PageToChange, SelPageSelected);
-		RefreshBottomBar = false;
-	}	
-	delay(50);
 
 }
