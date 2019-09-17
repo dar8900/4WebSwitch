@@ -37,23 +37,9 @@ void setup()
 
 void loop()
 {
-#ifdef TASK_MEASURE
-	TaskMeasure();
-#endif
-
-	TaskAlarm();
-
-#ifdef TASK_WEB
-	TaskWeb();
-#endif
 
 #ifdef TASK_DISPLAY
 	TaskDisplay();
 #endif
 
-#ifdef TASK_KEYBOARD
-	TaskKeyTest();
-#endif
-
-	RefreshReleStatistics();
 }
