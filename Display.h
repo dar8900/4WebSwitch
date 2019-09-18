@@ -23,11 +23,11 @@ typedef struct
 	double *FirstLineMeasure;
 	double *SecondLineMeasure;
 	double *ThirdLineMeasure;
-	
+
 	bool   ReformatFirstLine;
 	bool   ReformatSecondLine;
 	bool   ReformatThirdLine;
-	
+
 }MEASURE_PAGES;
 
 typedef struct
@@ -50,7 +50,7 @@ typedef enum
 	AVG_LINE_MEASURES,
 	AVG_POWER_MEASURES,
 	MAX_MEASURE_PAGES
-	
+
 }MEASURES_ITEM;
 
 typedef struct
@@ -68,9 +68,9 @@ typedef struct
 
 typedef struct
 {
-	const char *ResetTitle;
-	void (*ResetFunc)(void);
-}RESET_S;
+	const char *MenuTitle;
+	void (*MenuFunc)(void);
+}MENU_ITEM_S;
 
 typedef enum
 {
@@ -80,7 +80,7 @@ typedef enum
 	RESET_AVG,
 	RESET_N_ALARMS,
 	RESTART_MCU,
-	MAX_RESET_ITEMS	
+	MAX_RESET_ITEMS
 }RESET_ITEMS;
 
 void DisplayInit(void);

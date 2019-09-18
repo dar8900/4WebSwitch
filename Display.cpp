@@ -67,16 +67,16 @@ const MEASURE_PAGES MeasuresPage[MAX_MEASURE_PAGES] =
 
 const MEASURE_PAGE_LABEL_DES MeasureUdmLabel[MAX_MEASURE_PAGES] PROGMEM =
 {
-	{"I, V, PF"        , "A" , "V"   , " "  , "I"     , "V"      , " PF"     },
-	{"Potenze"	       , "W" , "VAr" , "VA" , "P.att" , "P.rea"  , "P.app"   },
-	{"Energie tot."    , "Wh", "VArh", "VAh", "E.att" , "E.rea"  , "E.app"   },
-	{"Energie parz."   , "Wh", "VArh", "VAh", "EP Att", "EP Rea" , "EP App"  },
-	{"Massimi I, V, PF", "A" , "V"   , " "  , "Max I" , "Max V"  , "MaxPF"   },
-	{"Massimi potenze" , "W" , "VAr" , "VA" , "MaxPat", "MaxPre" , "MaxPap"  },
-	{"Minimi I, V, PF" , "A" , "V"   , " "  , "Min I" , "Min V"  , "MinPF"   },
-	{"Minimi potenze"  , "W" , "VAr" , "VA" , "MinPat", "MinPre" , "MinPap"  },
-	{"Medie I, V, PF"  , "A" , "V"   , " "  , "Avg I" , "Avg V"  , "AvgPF"   },
-	{"Medie potenze"   , "W" , "VAr" , "VA" , "AvgPat", "AvgPre" , "AvgPap"  },
+	{"I, V, PF"        , "A" , "V"   , " "  , "I"      , "V"      , "PF"      },
+	{"Potenze"	       , "W" , "VAr" , "VA" , "P.att"  , "P.rea"  , "P.app"   },
+	{"Energie tot."    , "Wh", "VArh", "VAh", "E.att"  , "E.rea"  , "E.app"   },
+	{"Energie parz."   , "Wh", "VArh", "VAh", "EP Att" , "EP Rea" , "EP App"  },
+	{"Massimi I, V, PF", "A" , "V"   , " "  , "Max I"  , "Max V"  , "MaxPF"   },
+	{"Massimi potenze" , "W" , "VAr" , "VA" , "MaxPAtt", "MaxPRea", "MaxPApp" },
+	{"Minimi I, V, PF" , "A" , "V"   , " "  , "Min I"  , "Min V"  , "MinPF"   },
+	{"Minimi potenze"  , "W" , "VAr" , "VA" , "MinPAtt", "MinPRea", "MinPApp" },
+	{"Medie I, V, PF"  , "A" , "V"   , " "  , "Avg I"  , "Avg V"  , "AvgPF"   },
+	{"Medie potenze"   , "W" , "VAr" , "VA" , "AvgPAtt", "AvgPRea", "AvgPApp" },
 
 };
 
@@ -100,14 +100,14 @@ const REFORMAT ReformatTab[] =
 };
 
 
-const RESET_S Reset[MAX_RESET_ITEMS] =
+const char *Reset[MAX_RESET_ITEMS] =
 {
-	{"Reset energie"		 ,		ResetTotalEnergy  },
-	{"Reset energie parziali",      ResetPartialEnergy},
-	{"Reset max e min"		 ,      ResetMaxMin       },
-	{"Reset medie"	   	     ,      ResetAvg          },
-	{"Reset n. allarmi"	     ,      ResetAlarms       },
-	{"Restart switch"		 ,      ResetMcu          },
+	"Reset energie",
+	"Reset energie parziali",
+	"Reset max e min",
+	"Reset medie",
+	"Reset n. allarmi",
+	"Restart switch",
 };
 
 
@@ -475,16 +475,24 @@ static void DrawRelePage()
 	}
 }
 
+static void RefreshSetupPage(uint8_t SetupItem, bool SetupSelected)
+{
+
+}
+
+
 static void DrawSetupPage()
 {
-	bool ExitSetupPage = false;
+	bool ExitSetupPage = false, SetupSelected = false;
+	uint8_t SetupItem = 0;
 	while(!ExitSetupPage)
 	{
 		TaskManagement();
 		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
 			ClearScreen(true);
 		DrawTopInfoBar();
-		DrawPageChange(ActualPage, true);
+		DrawPageChange(ActualPage, !SetupSelected);
+		RefreshSetupPage(SetupItem, SetupSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
 		{
@@ -627,6 +635,7 @@ static void DrawAlarmSetupPage()
 {
 	bool ExitAlarmSetupPage = false, AlarmSelected = false;
 	uint8_t AlarmItem = 0;
+	RefreshPage.restart();
 	while(!ExitAlarmSetupPage)
 	{
 		TaskManagement();
@@ -665,6 +674,7 @@ static void DrawAlarmSetupPage()
 				}
 				else
 				{
+					RefreshPage.stop();
 					ExitAlarmSetupPage = true;
 				}
 				break;
@@ -711,6 +721,7 @@ static void DrawAlarmStatusPage()
 {
 	bool ExitAlarmStatusPage = false, AlarmSelected = false;
 	uint8_t AlarmItem = CURRENT;
+	RefreshPage.restart();
 	while(!ExitAlarmStatusPage)
 	{
 		TaskManagement();
@@ -743,6 +754,7 @@ static void DrawAlarmStatusPage()
 				}
 				break;
 			case B_OK:
+				RefreshPage.stop();
 				ExitAlarmStatusPage = true;
 				break;
 			default:
@@ -756,7 +768,7 @@ static void DrawAlarmStatusPage()
 
 static void RefreshResetList(uint8_t ResetItem, bool ResetSelected)
 {
-	String ResetItemName = String(Reset[ResetItem].ResetTitle), ResetNumber = "";
+	String ResetItemName = String(Reset[ResetItem]), ResetNumber = "";
 	Display.setFreeFont(FMB12);
 	Display.drawString(ResetItemName, CENTER_POS(ResetItemName), 104);
 	if(ResetSelected)
@@ -771,6 +783,7 @@ static void DrawResetPage()
 {
 	bool ExitResetPage = false, ResetSelected = false;
 	uint8_t ResetItem = 0;
+	RefreshPage.restart();
 	while(!ExitResetPage)
 	{
 		TaskManagement();
@@ -810,6 +823,7 @@ static void DrawResetPage()
 				}
 				else
 				{
+					RefreshPage.stop();
 					ExitResetPage = true;
 				}
 				break;

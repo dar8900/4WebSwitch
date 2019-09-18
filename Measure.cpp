@@ -2,7 +2,7 @@
 #include "Measure.h"
 #include "ADS1115.h"
 
- 
+
 #define SIM_WAVEFORMS
 
 #ifdef SIM_WAVEFORMS
@@ -13,7 +13,7 @@
 #define SIM_I_PEAK(I)	       (I * sqrt(2))
 
 #define SIM_V_DELAY(Grad)      ((Grad * DEG_TO_RAD)
-#define SIM_I_DELAY(Grad)	   ((Grad * DEG_TO_RAD)  
+#define SIM_I_DELAY(Grad)	   ((Grad * DEG_TO_RAD)
 
 #define SIM_FREQ(Frq)   	   (2 * PI * (Frq))
 
@@ -21,7 +21,7 @@
 #define DFLT_DELAY_I		    0.0
 
 // #define REQUEST_DELAY
-// #define REQUEST_PEAK	
+// #define REQUEST_PEAK
 
 #endif
 
@@ -30,12 +30,12 @@
 #define ADC_VOLTAGE_EXIT			  ADS1115_MUX_P1_NG
 
 #define ADC_SAMPLE	   	  			  120
-#define MAX_SAMPLING_WINDOW		      6
+#define MAX_SAMPLING_WINDOW		      5
 #define ADC_SAMPLING_RATE			  (ADC_SAMPLE / MAX_SAMPLING_WINDOW)
 
 #define BURDEN_R_VALUE	 			  47
 #define VOLTAGE_VOLT_CORRECTION	      0.597  // Partitore dal sensore con 2.2 k e 690 si ottiene un max di 1.194V
-#define PEAK_V(V)					  (V * sqrt(2))	
+#define PEAK_V(V)					  (V * sqrt(2))
 
 #define TARP_VOLTAGE				  210
 #define TARP_CURRENT         	      0.07
@@ -54,7 +54,7 @@ Chrono CalcEnergyTimer;
 
 bool EnableSimulation = true, OldEnableSim = true;
 
-double   AdcCurrentValues[ADC_SAMPLE], AdcVoltageValues[ADC_SAMPLE], AdcSearchZeroValues[ADC_SAMPLE], CurrentRmsAcc, VoltageRmsAcc, ActivePowerRmsAcc;
+double   AdcCurrentValues[ADC_SAMPLE], AdcVoltageValues[ADC_SAMPLE], CurrentRmsAcc, VoltageRmsAcc, ActivePowerRmsAcc;
 uint32_t EnergyAccumulatorCnt, AvgCounter;
 double   ApparentEnergyAccumulator, ActiveEnergyAccumulator, ReactiveEnergyAccumulator;
 double   CurrentAvgAcc, VoltageAvgAcc, ActivePowerAvgAcc, ReactivePowerAvgAcc, ApparentPowerAvgAcc, PowerFactorAvgAcc;
@@ -77,40 +77,40 @@ static void CalcMaxMinAvg()
 {
 	if(Measures.CurrentRMS > Measures.MaxMinAvg.MaxCurrent)
 		Measures.MaxMinAvg.MaxCurrent = Measures.CurrentRMS;
-	
+
 	if(Measures.CurrentRMS < Measures.MaxMinAvg.MinCurrent)
 		Measures.MaxMinAvg.MinCurrent = Measures.CurrentRMS;
-	
+
 	if(Measures.VoltageRMS > Measures.MaxMinAvg.MaxVoltage)
 		Measures.MaxMinAvg.MaxVoltage = Measures.VoltageRMS;
-	
+
 	if(Measures.VoltageRMS < Measures.MaxMinAvg.MinVoltage)
 		Measures.MaxMinAvg.MinVoltage = Measures.VoltageRMS;
-	
+
 	if(Measures.ActivePower > Measures.MaxMinAvg.MaxActivePower)
 		Measures.MaxMinAvg.MaxActivePower = Measures.ActivePower;
-	
+
 	if(Measures.ActivePower < Measures.MaxMinAvg.MinActivePower)
 		Measures.MaxMinAvg.MinActivePower = Measures.ActivePower;
-	
+
 	if(Measures.ReactivePower > Measures.MaxMinAvg.MaxReactivePower)
 		Measures.MaxMinAvg.MaxReactivePower = Measures.ReactivePower;
-	
+
 	if(Measures.ReactivePower < Measures.MaxMinAvg.MinReactivePower)
 		Measures.MaxMinAvg.MinReactivePower = Measures.ReactivePower;
-	
+
 	if(Measures.ApparentPower > Measures.MaxMinAvg.MaxApparentPower)
 		Measures.MaxMinAvg.MaxApparentPower = Measures.ApparentPower;
-	
+
 	if(Measures.ApparentPower < Measures.MaxMinAvg.MinApparentPower)
 		Measures.MaxMinAvg.MinApparentPower = Measures.ApparentPower;
-	
+
 	if(Measures.PowerFactor > Measures.MaxMinAvg.MaxPowerFactor)
 		Measures.MaxMinAvg.MaxPowerFactor = Measures.PowerFactor;
-	
+
 	if(Measures.PowerFactor < Measures.MaxMinAvg.MinPowerFactor)
 		Measures.MaxMinAvg.MinPowerFactor = Measures.PowerFactor;
-	
+
 	CurrentAvgAcc += Measures.CurrentRMS;
 	VoltageAvgAcc += Measures.VoltageRMS;
 	ActivePowerAvgAcc += Measures.ActivePower;
@@ -118,7 +118,7 @@ static void CalcMaxMinAvg()
 	ApparentPowerAvgAcc += Measures.ApparentPower;
 	PowerFactorAvgAcc += Measures.PowerFactor;
 	AvgCounter++;
-	
+
 	if(CalcAvgTimer.hasPassed(60, true))
 	{
 		if(AvgCounter != 0)
@@ -151,7 +151,7 @@ static void CalcSimCurrentVoltage(bool First)
 	for(Sample = 0; Sample < ADC_SAMPLE; Sample++)
 	{
 		SimVoltageWave[Sample] = SIM_V_PEAK(220)*sin(TO_RADIANTS(Sample * 2.88));
-		SimCurrentWave[Sample] = SIM_I_PEAK(UserPeakI)*sin(TO_RADIANTS((Sample * 2.88)) - TO_RADIANTS(30));	
+		SimCurrentWave[Sample] = SIM_I_PEAK(UserPeakI)*sin(TO_RADIANTS((Sample * 2.88)) - TO_RADIANTS(30));
 		VRms += (SimVoltageWave[Sample] * SimVoltageWave[Sample]);
 		IRms += (SimCurrentWave[Sample] * SimCurrentWave[Sample]);
 		RealPower += (SimCurrentWave[Sample] * SimVoltageWave[Sample]);
@@ -201,22 +201,29 @@ void AnalogBegin()
 // #endif
 }
 
-// Tempo impigegato teoricamente 50ms
+// Tempo impigegato teoricamente 25ms
 static bool SearchZeroV()
 {
 	int Sample = 0;
 	bool ZeroVFound = false;
+  float ZeroAdc = 0.0;
 	AnalogBoard.setMultiplexer(ADC_VOLTAGE_EXIT);
-	for(Sample = 0; Sample < (ADC_SAMPLING_RATE * 2); Sample++)
-	{
-		AdcSearchZeroValues[Sample] = AnalogBoard.getVolts(true) - VOLTAGE_VOLT_CORRECTION;
-		delayMicroseconds(1200);
-		if(AdcSearchZeroValues[Sample] > -0.010 && AdcSearchZeroValues[Sample] < 0.010)
-		{
-			ZeroVFound = true;
-			break;
-		}
-	}
+  while(Sample < ADC_SAMPLING_RATE)
+  {
+    ZeroAdc += (AnalogBoard.getVolts(true) - VOLTAGE_VOLT_CORRECTION);
+    if(Sample % 4)
+    {
+      ZeroAdc /= 4;
+      if(ZeroAdc > -0.010 && ZeroAdc < 0.010)
+      {
+        ZeroVFound = true;
+        break;
+      }
+      ZeroAdc = 0.0;
+    }
+    Sample++;
+    delayMicroseconds(1200);
+  }
 	return ZeroVFound;
 }
 
@@ -230,7 +237,6 @@ static void CalcMeasure()
 	ZeroVFound = SearchZeroV();
 	if(ZeroVFound)
 	{
-		DBG("Zero V trovato");
 		// Tempo impiegato teoricamente 50ms
 		for(Sample = (SamplingWindow * ADC_SAMPLING_RATE); Sample < (ADC_SAMPLING_RATE + (SamplingWindow * ADC_SAMPLING_RATE)); Sample++)
 		{
@@ -246,10 +252,11 @@ static void CalcMeasure()
 			ActivePowerTemp = ((AdcCurrentValues[Sample] / BURDEN_R_VALUE * 1000) * (AdcVoltageValues[Sample] * PEAK_V(220.0) / VOLTAGE_VOLT_CORRECTION));
 			ActivePowerRmsAcc += (ActivePowerTemp * ActivePowerTemp);
 		}
+		DBG("Zero V trovato");
 		SamplingWindow++;
 		if(SamplingWindow == MAX_SAMPLING_WINDOW)
 		{
-			DBG("Raggiunte le 6 finestre di campionamento");
+			DBG("Raggiunte le 5 finestre di campionamento");
 			SamplingWindow = 0;
 			CurrentRmsAcc /= ADC_SAMPLE;
 			CurrentRmsAcc = sqrt(CurrentRmsAcc);
@@ -260,7 +267,7 @@ static void CalcMeasure()
 			Measures.ActivePower = ActivePowerRmsAcc;
 			ActivePowerRmsAcc = 0.0;
 			Measures.VoltageRMS = (VoltageRmsAcc * PEAK_V(220.0) / VOLTAGE_VOLT_CORRECTION);
-			Measures.CurrentRMS = (CurrentRmsAcc / BURDEN_R_VALUE) * 1000; 
+			Measures.CurrentRMS = (CurrentRmsAcc / BURDEN_R_VALUE) * 1000;
 			CurrentRmsAcc = 0.0;
 			VoltageRmsAcc = 0.0;
 			if(Measures.CurrentRMS <= TARP_CURRENT || Measures.VoltageRMS <= TARP_VOLTAGE)
@@ -313,24 +320,20 @@ static void CalcEnergy()
 		ReactiveEnergyAccumulator = 0.0;
 		EnergyAccumulatorCnt      = 0;
 	}
-	
+
 }
 
 static void ResetMeasure()
 {
-Measures.CurrentRMS            = 0.0;
-Measures.VoltageRMS   	       = 0.0;
-Measures.ApparentPower		   = 0.0;
-Measures.ActivePower           = 0.0;
-Measures.ReactivePower         = 0.0;
-Measures.ApparentEnergy		   = 0.0;
-Measures.ActiveEnergy   	   = 0.0;	     
-Measures.ReactiveEnergy 	   = 0.0;	
-Measures.PartialApparentEnergy = 0.0;	
-Measures.PartialActiveEnergy   = 0.0;	
-Measures.PartialReactiveEnergy = 0.0;	
-Measures.PowerFactor		   = 0.0;	
-	
+  Measures.CurrentRMS            = 0.0;
+  Measures.VoltageRMS   	       = 0.0;
+  Measures.ApparentPower		     = 0.0;
+  Measures.ActivePower           = 0.0;
+  Measures.ReactivePower         = 0.0;
+  Measures.PowerFactor		       = 0.0;
+  ResetTotalEnergy();
+  ResetMaxMin();
+  ResetAvg();
 }
 
 
@@ -340,16 +343,16 @@ void ResetTotalEnergy()
 	Measures.ApparentEnergy        = 0.0;
 	Measures.ActiveEnergy          = 0.0;
 	Measures.ReactiveEnergy        = 0.0;
-	Measures.PartialApparentEnergy = 0.0; 
+	Measures.PartialApparentEnergy = 0.0;
 	Measures.PartialActiveEnergy   = 0.0;
-	Measures.PartialReactiveEnergy = 0.0; 
+	Measures.PartialReactiveEnergy = 0.0;
 }
 
 void ResetPartialEnergy()
 {
-	Measures.PartialApparentEnergy = 0.0; 
+	Measures.PartialApparentEnergy = 0.0;
 	Measures.PartialActiveEnergy   = 0.0;
-	Measures.PartialReactiveEnergy = 0.0; 
+	Measures.PartialReactiveEnergy = 0.0;
 }
 
 void ResetMaxMin()
@@ -385,7 +388,7 @@ void TaskMeasure()
 	else
 		CalcSimCurrentVoltage(false);
 
-	CalcEnergy();	
+	CalcEnergy();
 	if(OldEnableSim != EnableSimulation)
 	{
 		OldEnableSim = EnableSimulation;
