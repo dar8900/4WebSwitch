@@ -270,9 +270,9 @@ static void CalcMeasure()
 			else
 			{
 				Measures.ApparentPower = Measures.CurrentRMS * Measures.VoltageRMS;
-				Measures.ReactivePower = Measures.ApparentPower - Measures.ActiveEnergy;
+				Measures.ReactivePower = Measures.ApparentPower - Measures.ActivePower;
 				if(Measures.ApparentPower != 0.0)
-					Measures.PowerFactor = Measures.ActiveEnergy / Measures.ApparentPower;
+					Measures.PowerFactor = Measures.ActivePower / Measures.ApparentPower;
 				else
 					Measures.PowerFactor = INVALID_PF_VALUE;
 			}
@@ -294,12 +294,12 @@ static void CalcEnergy()
 	{
 		if(EnergyAccumulatorCnt != 0)
 		{
-			Measures.ApparentEnergy 	   += ((ApparentEnergyAccumulator / EnergyAccumulatorCnt) / 3600);
-			Measures.ActiveEnergy 		   += ((ActiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
-			Measures.ReactiveEnergy        += ((ReactiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
-			Measures.PartialApparentEnergy += ((ApparentEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
-			Measures.PartialActiveEnergy   += ((ActiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
-			Measures.PartialReactiveEnergy += ((ReactiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
+			Measures.Energies.ApparentEnergy 	   += ((ApparentEnergyAccumulator / EnergyAccumulatorCnt) / 3600);
+			Measures.Energies.ActiveEnergy 		   += ((ActiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
+			Measures.Energies.ReactiveEnergy        += ((ReactiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
+			Measures.Energies.PartialApparentEnergy += ((ApparentEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
+			Measures.Energies.PartialActiveEnergy   += ((ActiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
+			Measures.Energies.PartialReactiveEnergy += ((ReactiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
 		}
 		ApparentEnergyAccumulator = 0.0;
 		ActiveEnergyAccumulator   = 0.0;
@@ -311,38 +311,33 @@ static void CalcEnergy()
 
 static void ResetMeasure()
 {
-Measures.CurrentRMS            = 0.0;
-Measures.VoltageRMS   	       = 0.0;
-Measures.ApparentPower		   = 0.0;
-Measures.ActivePower           = 0.0;
-Measures.ReactivePower         = 0.0;
-Measures.ApparentEnergy		   = 0.0;
-Measures.ActiveEnergy   	   = 0.0;	     
-Measures.ReactiveEnergy 	   = 0.0;	
-Measures.PartialApparentEnergy = 0.0;	
-Measures.PartialActiveEnergy   = 0.0;	
-Measures.PartialReactiveEnergy = 0.0;	
-Measures.PowerFactor		   = 0.0;	
-	
+	Measures.CurrentRMS            = 0.0;
+	Measures.VoltageRMS   	       = 0.0;
+	Measures.ApparentPower		   = 0.0;
+	Measures.ActivePower           = 0.0;
+	Measures.ReactivePower         = 0.0;
+	ResetTotalEnergy();
+	ResetMaxMin();
+	ResetAvg();	
 }
 
 
 
 void ResetTotalEnergy()
 {
-	Measures.ApparentEnergy        = 0.0;
-	Measures.ActiveEnergy          = 0.0;
-	Measures.ReactiveEnergy        = 0.0;
-	Measures.PartialApparentEnergy = 0.0; 
-	Measures.PartialActiveEnergy   = 0.0;
-	Measures.PartialReactiveEnergy = 0.0; 
+	Measures.Energies.ApparentEnergy        = 0.0;
+	Measures.Energies.ActiveEnergy          = 0.0;
+	Measures.Energies.ReactiveEnergy        = 0.0;
+	Measures.Energies.PartialApparentEnergy = 0.0;
+	Measures.Energies.PartialActiveEnergy   = 0.0;
+	Measures.Energies.PartialReactiveEnergy = 0.0;
 }
 
 void ResetPartialEnergy()
 {
-	Measures.PartialApparentEnergy = 0.0; 
-	Measures.PartialActiveEnergy   = 0.0;
-	Measures.PartialReactiveEnergy = 0.0; 
+	Measures.Energies.PartialApparentEnergy = 0.0;
+	Measures.Energies.PartialActiveEnergy   = 0.0;
+	Measures.Energies.PartialReactiveEnergy = 0.0;
 }
 
 void ResetMaxMin()

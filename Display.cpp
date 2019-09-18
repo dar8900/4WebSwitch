@@ -79,17 +79,17 @@ PAGE_DESCRIPTOR DisplayPages[MAX_PAGES] =
 
 const MEASURE_PAGES MeasuresPage[MAX_MEASURE_PAGES] = 
 {
-	{&Measures.CurrentRMS, 			     &Measures.VoltageRMS, 			       &Measures.PowerFactor	   	       , true, true, false},
-	{&Measures.ActivePower, 		     &Measures.ReactivePower,			   &Measures.ApparentPower			   , true, true, true},
-	{&Measures.ActiveEnergy, 	         &Measures.ReactiveEnergy, 			   &Measures.ApparentEnergy		       , true, true, true},
-	{&Measures.PartialActiveEnergy,      &Measures.PartialReactiveEnergy, 	   &Measures.PartialApparentEnergy	   , true, true, true},
-	{&Measures.MaxMinAvg.MaxCurrent,     &Measures.MaxMinAvg.MaxVoltage, 	   &Measures.MaxMinAvg.MaxPowerFactor  , true, true, false},
-	{&Measures.MaxMinAvg.MaxActivePower, &Measures.MaxMinAvg.MaxReactivePower, &Measures.MaxMinAvg.MaxApparentPower, true, true, true},
-	{&Measures.MaxMinAvg.MinCurrent,     &Measures.MaxMinAvg.MinVoltage, 	   &Measures.MaxMinAvg.MinPowerFactor  , true, true, false},
-	{&Measures.MaxMinAvg.MinActivePower, &Measures.MaxMinAvg.MinReactivePower, &Measures.MaxMinAvg.MinApparentPower, true, true, true},
-	{&Measures.MaxMinAvg.CurrentAvg,     &Measures.MaxMinAvg.VoltageAvg, 	   &Measures.MaxMinAvg.PowerFactorAvg  , true, true, false},
-	{&Measures.MaxMinAvg.ActivePowerAvg, &Measures.MaxMinAvg.ReactivePowerAvg, &Measures.MaxMinAvg.ApparentPowerAvg, true, true, true},
-	
+	{&Measures.CurrentRMS, 			         &Measures.VoltageRMS, 			           &Measures.PowerFactor	   	            , true, true, false},
+	{&Measures.ActivePower, 		         &Measures.ReactivePower,			       &Measures.ApparentPower			        , true, true, true },
+	{&Measures.Energies.ActiveEnergy, 	     &Measures.Energies.ReactiveEnergy, 	   &Measures.Energies.ApparentEnergy		, true, true, true },
+	{&Measures.Energies.PartialActiveEnergy, &Measures.Energies.PartialReactiveEnergy, &Measures.Energies.PartialApparentEnergy	, true, true, true },
+	{&Measures.MaxMinAvg.MaxCurrent,         &Measures.MaxMinAvg.MaxVoltage, 	       &Measures.MaxMinAvg.MaxPowerFactor       , true, true, false},
+	{&Measures.MaxMinAvg.MaxActivePower,     &Measures.MaxMinAvg.MaxReactivePower,     &Measures.MaxMinAvg.MaxApparentPower     , true, true, true },
+	{&Measures.MaxMinAvg.MinCurrent,         &Measures.MaxMinAvg.MinVoltage, 	       &Measures.MaxMinAvg.MinPowerFactor       , true, true, false},
+	{&Measures.MaxMinAvg.MinActivePower,     &Measures.MaxMinAvg.MinReactivePower,     &Measures.MaxMinAvg.MinApparentPower     , true, true, true },
+	{&Measures.MaxMinAvg.CurrentAvg,         &Measures.MaxMinAvg.VoltageAvg, 	       &Measures.MaxMinAvg.PowerFactorAvg       , true, true, false},
+	{&Measures.MaxMinAvg.ActivePowerAvg,     &Measures.MaxMinAvg.ReactivePowerAvg,     &Measures.MaxMinAvg.ApparentPowerAvg     , true, true, true },
+
 };
 
 

@@ -16,7 +16,7 @@
 #define NODE_MCU
 // #define ARDUINO_BOARD_MCU
 
-#ifdef NODE_MCU
+
 typedef enum
 {
 	DATAPIN         = 15,
