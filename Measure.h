@@ -29,6 +29,16 @@ typedef struct
 	double   PowerFactorAvg;
 }MAX_MIN_AVG_MEASURE;
 
+typedef struct 
+{
+    double   ApparentEnergy;
+	double   ActiveEnergy;
+	double   ReactiveEnergy;
+    double   PartialApparentEnergy;
+	double   PartialActiveEnergy;
+	double   PartialReactiveEnergy;	
+}ENERGIES_MEASURES;
+
 
 typedef struct
 {
@@ -37,13 +47,8 @@ typedef struct
     double   ApparentPower;
 	double   ActivePower;
 	double   ReactivePower;
-    double   ApparentEnergy;
-	double   ActiveEnergy;
-	double   ReactiveEnergy;
-    double   PartialApparentEnergy;
-	double   PartialActiveEnergy;
-	double   PartialReactiveEnergy;
     double   PowerFactor;
+	ENERGIES_MEASURES Energies;
 	MAX_MIN_AVG_MEASURE MaxMinAvg;
 }GENERAL_MEASURES;
 
