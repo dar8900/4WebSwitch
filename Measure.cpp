@@ -291,8 +291,6 @@ static void CalcMeasure()
 					Measures.PowerFactor = INVALID_PF_VALUE;
 			}
 		}
-		for(int i = 0; i < ADC_SAMPLE; i++)
-			AdcSearchZeroValues[i] = 0.0;
 	}
 	CalcMaxMinAvg();
 }

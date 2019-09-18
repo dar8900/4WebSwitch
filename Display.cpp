@@ -688,7 +688,7 @@ static void DrawAlarmSetupPage()
 
 static void RefreshAlarmStatus(uint8_t AlarmItem, bool AlarmStatusSelected)
 {
-	Display.setFreeFont(FMB9)
+	Display.setFreeFont(FMB9);
 	Display.drawString(AlarmsName[AlarmItem], CENTER_POS(AlarmsName[AlarmItem]), 20);
 	if(Alarms[AlarmItem].IsActive)
 	{
@@ -711,7 +711,7 @@ static void RefreshAlarmStatus(uint8_t AlarmItem, bool AlarmStatusSelected)
 	{
 		Display.drawString("NON ATTIVO", CENTER_POS("NON ATTIVO"), Display.fontHeight() + 5, TFT_GREEN);
 	}
-	Display.setFreeFont(FM9)
+	Display.setFreeFont(FM9);
 	String AlarmNumberStr = String(AlarmItem + 1) + "/" + String(MAX_ALARM);
 	Display.drawString(AlarmNumberStr, CENTER_POS(AlarmNumberStr), 200);
 }
