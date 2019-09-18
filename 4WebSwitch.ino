@@ -22,9 +22,7 @@ void ResetMcu()
 void setup()
 {
 	
-#ifdef NODE_MCU
-	Wire.begin(5, 4);
-#endif	
+	Wire.begin(5, 4);	
 	Serial.begin(115200);
 	// EepromInit();
 	AnalogBegin();

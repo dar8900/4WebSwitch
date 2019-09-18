@@ -40,13 +40,6 @@
 #define TARP_VOLTAGE				  210
 #define TARP_CURRENT         	      0.07
 
-#ifdef ARDUINO_BOARD_MCU
-#define MIN_ANALOG_V_READ  0.0001875
-#endif
-
-#ifdef NODE_MCU
-#define MIN_ANALOG_V_READ  0.00003125
-#endif
 
 ADS1115 AnalogBoard(ADS1115_DEFAULT_ADDRESS);
 

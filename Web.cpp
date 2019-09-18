@@ -1,6 +1,5 @@
 #include "4WebSwitch.h"
 
-#ifdef NODE_MCU
 
 #include "Web.h"
 #include "Rele.h"
@@ -56,8 +55,6 @@ Chrono GetTimeTimer(Chrono::SECONDS);
 
 Chrono ToggleRele1Timer;
 
-// bool ClientConnected = false;
-// uint8_t OldReleStatus[N_RELE];
 bool WifiConnected = false;
 uint8_t WifiSignal;
 uint32_t TimeInSecond = 0;
@@ -80,14 +77,6 @@ const char* ReleID[N_RELE] =
 	"presa 4"
 };
 
-
-const String SignalLabel[MAX_SIGNAL_LABEL] = 
-{
-	"NO_SIGNAL",
-	"PESSIMO",
-	"BUONO",
-	"OTTIMO"	
-};
 
 
 static bool CheckWifiCon()
@@ -424,6 +413,4 @@ void TaskWeb()
 		TimeInSecond = 0;
 	}
 }
-
-#endif
 

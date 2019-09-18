@@ -26,19 +26,7 @@ typedef enum
 	CLEARREGPIN 	=  0 
 	
 }PIN_NODE;
-#endif
 
-#ifdef ARDUINO_BOARD_MCU
-typedef enum
-{
-	DATAPIN         = 2,
-	CLOCKPIN 	    = 3,
-	LATCHPIN 	    = 4,
-	OUTPUTENABLEPIN = 5,
-	CLEARREGPIN 	= 0 
-	
-}PIN_NODE;
-#endif
 
 
 typedef enum
