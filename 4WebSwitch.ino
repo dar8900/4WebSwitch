@@ -12,7 +12,7 @@
 #define TASK_MEASURE
 #define TASK_WEB
 
-#define FW_VERSION 	1.2
+#define FW_VERSION 	1.3
 
 void ResetMcu()
 {
