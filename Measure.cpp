@@ -37,7 +37,7 @@
 #define VOLTAGE_VOLT_CORRECTION	      0.597  // Partitore dal sensore con 2.2 k e 690 si ottiene un max di 1.194V
 #define PEAK_V(V)					  (V * sqrt(2))
 
-#define TARP_VOLTAGE				  210
+#define TARP_VOLTAGE				  50
 #define TARP_CURRENT         	      0.07
 
 #ifdef ARDUINO_BOARD_MCU
@@ -51,8 +51,8 @@
 ADS1115 AnalogBoard(ADS1115_DEFAULT_ADDRESS);
 
 Chrono CalcEnergyTimer;
-
-bool EnableSimulation = true, OldEnableSim = true;
+bool OldEnableSim;
+bool EnableSimulation = OldEnableSim = false;
 
 double   AdcCurrentValues[ADC_SAMPLE], AdcVoltageValues[ADC_SAMPLE], CurrentRmsAcc, VoltageRmsAcc, ActivePowerRmsAcc;
 uint32_t EnergyAccumulatorCnt, AvgCounter;
@@ -243,13 +243,13 @@ static void CalcMeasure()
 			AnalogBoard.setMultiplexer(ADC_VOLTAGE_EXIT);
 			AdcVoltageValues[Sample] = AnalogBoard.getVolts(true) - VOLTAGE_VOLT_CORRECTION;
 			delayMicroseconds(1200);
-			DBG(AdcVoltageValues[Sample]);
+			
 			AnalogBoard.setMultiplexer(ADC_CURRENT_EXIT);
 			AdcCurrentValues[Sample] = AnalogBoard.getVolts(true);
 			delayMicroseconds(1200);
 			CurrentRmsAcc += (AdcCurrentValues[Sample] * AdcCurrentValues[Sample]);
 			VoltageRmsAcc += (AdcVoltageValues[Sample] * AdcVoltageValues[Sample]);
-			ActivePowerTemp = ((AdcCurrentValues[Sample] / BURDEN_R_VALUE * 1000) * (AdcVoltageValues[Sample] * PEAK_V(220.0) / VOLTAGE_VOLT_CORRECTION));
+			ActivePowerTemp = ((AdcCurrentValues[Sample] / BURDEN_R_VALUE * 1000) * (AdcVoltageValues[Sample] * PEAK_V(220.0) / VOLTAGE_VOLT_CORRECTION * 1.84));
 			ActivePowerRmsAcc += (ActivePowerTemp * ActivePowerTemp);
 		}
 		DBG("Zero V trovato");
@@ -266,7 +266,8 @@ static void CalcMeasure()
 			ActivePowerRmsAcc = sqrt(ActivePowerRmsAcc);
 			Measures.ActivePower = ActivePowerRmsAcc;
 			ActivePowerRmsAcc = 0.0;
-			Measures.VoltageRMS = (VoltageRmsAcc * PEAK_V(220.0) / VOLTAGE_VOLT_CORRECTION);
+			Measures.VoltageRMS = (VoltageRmsAcc * PEAK_V(220.0) / VOLTAGE_VOLT_CORRECTION  * 1.84);
+			DBG(Measures.VoltageRMS);
 			Measures.CurrentRMS = (CurrentRmsAcc / BURDEN_R_VALUE) * 1000;
 			CurrentRmsAcc = 0.0;
 			VoltageRmsAcc = 0.0;

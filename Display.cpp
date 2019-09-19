@@ -21,12 +21,12 @@
 
 #define MEASURE_IN_PAGE 	3
 
-#define REFRESH_DELAY		500
+#define REFRESH_DELAY	     1000
 #define LOOPS_DELAY		     50
 
 TFT_eSPI Display = TFT_eSPI();
 
-Chrono RefreshPage;
+Chrono RefreshPage, RefreshMeasure;
 
 
 const unsigned char *WifiIcons[] =
@@ -124,7 +124,8 @@ void DisplayInit()
 
 static void TaskManagement()
 {
-	TaskMeasure();
+	if(RefreshMeasure.hasPassed(1000, true))
+		TaskMeasure();
 	TaskAlarm();
 	TaskWeb();
 	RefreshReleStatistics();
@@ -169,6 +170,12 @@ static void ClearScreen(bool FullScreen)
 		Ypos = 14;
 		Display.fillRect( 0,  Ypos,  Display.width(),  Display.height() - Ypos  , BG_COLOR);
 	}
+}
+
+static void ClearTopBottomBar()
+{
+	Display.fillRect(0, 0, Display.width(), 14, BG_COLOR);
+	Display.fillRect(0, Display.height() - 14, Display.width(), 14, BG_COLOR);
 }
 
 void DrawPopUp(const char *Text, uint16_t Delay)
@@ -243,10 +250,11 @@ static void DrawReleStatus()
 static void DrawMainScreen()
 {
 	bool ExitMainScreen = false;
+	RefreshPage.restart();
 	while(!ExitMainScreen)
 	{
 		TaskManagement();
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+		if(RefreshPage.hasPassed(5000, true))
 			ClearScreen(true);
 		DrawTopInfoBar();
 		DrawPageChange(ActualPage, true);
@@ -266,6 +274,7 @@ static void DrawMainScreen()
 				break;
 			case B_OK:
 				ExitMainScreen = true;
+				ClearScreen(true);
 				RefreshPage.stop();
 				break;
 			default:
@@ -332,7 +341,7 @@ static void RefreshMeasurePage(uint8_t MeasurePageNumber)
 		}
 		if(Refactor)
 		{
-			Range = SearchRange(ActualMeasure);
+			Range = SearchRange(fabs(ActualMeasure));
 			ActualMeasure *= ReformatTab[Range].RefactorValue;
 			UdmRF = String(ReformatTab[Range].Odg) + Udm;
 		}
@@ -392,6 +401,7 @@ static void DrawMeasurePage()
 				break;
 			case B_OK:
 				RefreshPage.stop();
+				ClearScreen(true);
 				ExitMeasurePage = true;
 				break;
 			default:
@@ -424,13 +434,18 @@ static void RefreshReleChangeStatus(uint8_t releIndex, bool ReleStatusSelected)
 static void DrawRelePage()
 {
 	uint8_t ReleIndex = 0;
-	bool ExitRelePage = false, ReleStatusSelected = false;
+	bool ExitRelePage = false, ReleStatusSelected = false, Refresh = true;
 	RefreshPage.restart();
 	while(!ExitRelePage)
 	{
 		TaskManagement();
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+		if(Refresh)
+		{
+			Refresh = false;
 			ClearScreen(true);
+		}
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearTopBottomBar();
 		DrawTopInfoBar();
 		DrawPageChange(ActualPage, !ReleStatusSelected);
 		RefreshReleChangeStatus(ReleIndex, ReleStatusSelected);
@@ -440,6 +455,7 @@ static void DrawRelePage()
 			case B_UP:
 			case B_DOWN:
 				ReleStatusSelected = !ReleStatusSelected;
+				Refresh = true;
 				break;
 			case B_LEFT:
 				if(ReleStatusSelected)
@@ -456,15 +472,18 @@ static void DrawRelePage()
 					else
 						ActualPage = MAIN_PAGE;
 				}
+				Refresh = true;
 				break;
 			case B_OK:
 				if(ReleStatusSelected)
 				{
 					ToggleRele(ReleIndex);
+					Refresh = true;
 				}
 				else
 				{
 					RefreshPage.stop();
+					ClearScreen(true);
 					ExitRelePage = true;
 				}
 				break;
@@ -509,6 +528,7 @@ static void DrawSetupPage()
 					ActualPage = 0;
 				break;
 			case B_OK:
+				ClearScreen(true);
 				ExitSetupPage = true;
 				break;
 			default:
@@ -535,9 +555,12 @@ static void ModifyAlarm(uint8_t AlarmItem)
 {
 	bool ExitModifyAlarm = false;
 	uint8_t ItemToModify = 0;
-	bool Enabled = false, Disconnect = false, Refresh = false;
+	bool Enabled = false, Disconnect = false, Refresh = true;
 	String DisabledStr = "", DisconnectStr = "";
 	uint16_t ExitCnt = 0;
+	ButtonPress = NO_PRESS;
+	Enabled = Alarms[AlarmItem].IsEnabled;
+	Disconnect = Alarms[AlarmItem].EnableDisconnection;	
 	while(!ExitModifyAlarm)
 	{
 		if(Refresh)
@@ -546,32 +569,30 @@ static void ModifyAlarm(uint8_t AlarmItem)
 			Refresh = false;
 		}
 		DrawTopInfoBar();
-		if(ItemToModify == 0)
-		{
-			if(Enabled)
-				DisabledStr = "ABILITATO";
-			else
-				DisabledStr = "DISABILITATO";
-		}
+
+		if(Enabled)
+			DisabledStr = "ABILITATO";
 		else
-		{
-			if(Disconnect)
-				DisconnectStr = "ABILITATA";
-			else
-				DisconnectStr = "DISABILITATA";
-		}
+			DisabledStr = "DISABILITATO";
+		if(Disconnect)
+			DisconnectStr = "ABILITATA";
+		else
+			DisconnectStr = "DISABILITATA";
+		Display.setFreeFont(FMB9);
+		Display.drawString("Abilita allarme",  CENTER_POS("Abilita allarme"), 50);
+		Display.drawString("Abilita disconn.", CENTER_POS("Abilita disconn."), 120);
 		Display.setFreeFont(FMB12);
-		Display.drawString(DisabledStr, CENTER_POS(DisabledStr), 50);
-		Display.drawString(DisconnectStr, CENTER_POS(DisconnectStr), 130);
+		Display.drawString(DisabledStr, CENTER_POS(DisabledStr), 80);
+		Display.drawString(DisconnectStr, CENTER_POS(DisconnectStr), 150);
 		if(ItemToModify == 0)
 		{
-			Display.drawRoundRect( CENTER_POS(DisabledStr) - 4,  50  - 4,  Display.textWidth(DisabledStr) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
-			Display.drawRoundRect( CENTER_POS(DisconnectStr) - 4,  130  - 4,  Display.textWidth(DisconnectStr) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
+			Display.drawRoundRect( CENTER_POS(DisabledStr) - 4,  80  - 4,  Display.textWidth(DisabledStr) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
+			Display.drawRoundRect( CENTER_POS(DisconnectStr) - 4,  150  - 4,  Display.textWidth(DisconnectStr) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
 		}
 		else
 		{
-			Display.drawRoundRect( CENTER_POS(DisabledStr) - 4,  50  - 4,  Display.textWidth(DisabledStr) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
-			Display.drawRoundRect( CENTER_POS(DisconnectStr) - 4,  130  - 4,  Display.textWidth(DisconnectStr) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
+			Display.drawRoundRect( CENTER_POS(DisabledStr) - 4,  80  - 4,  Display.textWidth(DisabledStr) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
+			Display.drawRoundRect( CENTER_POS(DisconnectStr) - 4,  150  - 4,  Display.textWidth(DisconnectStr) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
 		}
 
 		ButtonPress = CheckButtons();
@@ -618,29 +639,34 @@ static void ModifyAlarm(uint8_t AlarmItem)
 				{
 					Alarms[AlarmItem].EnableDisconnection = Disconnect;
 				}
-				ClearScreen(false);
+				ClearScreen(true);
 				ExitModifyAlarm = true;
 				break;
 			default:
 				break;
 		}
 		ExitCnt++;
-		if(ExitCnt == 125)
-			ExitModifyAlarm = true;
+		// if(ExitCnt == 125)
+			// ExitModifyAlarm = true;
 		delay(80);
 	}
 }
 
 static void DrawAlarmSetupPage()
 {
-	bool ExitAlarmSetupPage = false, AlarmSelected = false;
+	bool ExitAlarmSetupPage = false, AlarmSelected = false, Refresh = true;
 	uint8_t AlarmItem = 0;
 	RefreshPage.restart();
 	while(!ExitAlarmSetupPage)
 	{
 		TaskManagement();
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+		if(Refresh)
+		{
+			Refresh = false;
 			ClearScreen(true);
+		}
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearTopBottomBar();
 		DrawTopInfoBar();
 		DrawPageChange(ActualPage, !AlarmSelected);
 		RefreshAlarmSetupList(AlarmItem, AlarmSelected);
@@ -650,6 +676,7 @@ static void DrawAlarmSetupPage()
 			case B_UP:
 			case B_DOWN:
 				AlarmSelected = !AlarmSelected;
+				Refresh = true;
 				break;
 			case B_LEFT:
 				if(AlarmSelected)
@@ -666,15 +693,19 @@ static void DrawAlarmSetupPage()
 					else
 						ActualPage = 0;
 				}
+				Refresh = true;
 				break;
 			case B_OK:
 				if(AlarmSelected)
 				{
+					delay(20);
 					ModifyAlarm(AlarmItem);
+					Refresh = true;
 				}
 				else
 				{
 					RefreshPage.stop();
+					ClearScreen(true);
 					ExitAlarmSetupPage = true;
 				}
 				break;
@@ -692,25 +723,28 @@ static void RefreshAlarmStatus(uint8_t AlarmItem, bool AlarmStatusSelected)
 	Display.drawString(AlarmsName[AlarmItem], CENTER_POS(AlarmsName[AlarmItem]), 20);
 	if(Alarms[AlarmItem].IsActive)
 	{
-		Display.drawString("ATTIVO", CENTER_POS("ATTIVO"), Display.fontHeight() + 5, TFT_YELLOW);
+		Display.setTextColor(TFT_YELLOW);
+		Display.drawString("ATTIVO", CENTER_POS("ATTIVO"), Display.fontHeight() + 30);
 		if(Alarms[AlarmItem].WichThr == UNDER_THR)
 		{
-			Display.drawString(UnderThrAlarmMessage[AlarmItem], CENTER_POS(UnderThrAlarmMessage[AlarmItem]), Display.fontHeight() + 10);
+			Display.drawString(UnderThrAlarmMessage[AlarmItem], CENTER_POS(UnderThrAlarmMessage[AlarmItem]), Display.fontHeight() + 50);
 		}
 		else
 		{
-			Display.drawString(OverThrAlarmMessage[AlarmItem], CENTER_POS(OverThrAlarmMessage[AlarmItem]), Display.fontHeight() + 10);
+			Display.drawString(OverThrAlarmMessage[AlarmItem], CENTER_POS(OverThrAlarmMessage[AlarmItem]), Display.fontHeight() + 50);
 		}
 		String AlarmTime = FormatTime(Alarms[AlarmItem].AlarmTime, true), AlarmDate = FormatDate(Alarms[AlarmItem].AlarmTime);
 		String OccurenceStr = String(Alarms[AlarmItem].Occurences);
-		Display.drawString(AlarmTime, CENTER_POS(AlarmTime), Display.fontHeight() + 15);
-		Display.drawString(AlarmDate, CENTER_POS(AlarmDate), Display.fontHeight() + 20);
-		Display.drawString(OccurenceStr, CENTER_POS(OccurenceStr), Display.fontHeight() + 25);
+		Display.drawString(AlarmTime, CENTER_POS(AlarmTime), Display.fontHeight() + 70);
+		Display.drawString(AlarmDate, CENTER_POS(AlarmDate), Display.fontHeight() + 90);
+		Display.drawString(OccurenceStr, CENTER_POS(OccurenceStr), Display.fontHeight() + 110);
 	}
 	else
 	{
-		Display.drawString("NON ATTIVO", CENTER_POS("NON ATTIVO"), Display.fontHeight() + 5, TFT_GREEN);
+		Display.setTextColor(TFT_GREEN);
+		Display.drawString("NON ATTIVO", CENTER_POS("NON ATTIVO"), Display.fontHeight() + 30);
 	}
+	Display.setTextColor(TFT_WHITE);
 	Display.setFreeFont(FM9);
 	String AlarmNumberStr = String(AlarmItem + 1) + "/" + String(MAX_ALARM);
 	Display.drawString(AlarmNumberStr, CENTER_POS(AlarmNumberStr), 200);
@@ -719,14 +753,19 @@ static void RefreshAlarmStatus(uint8_t AlarmItem, bool AlarmStatusSelected)
 
 static void DrawAlarmStatusPage()
 {
-	bool ExitAlarmStatusPage = false, AlarmSelected = false;
+	bool ExitAlarmStatusPage = false, AlarmSelected = false, Refresh = true;
 	uint8_t AlarmItem = CURRENT;
 	RefreshPage.restart();
 	while(!ExitAlarmStatusPage)
 	{
 		TaskManagement();
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+		if(Refresh)
+		{
+			Refresh = false;
 			ClearScreen(true);
+		}
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearTopBottomBar();
 		DrawTopInfoBar();
 		DrawPageChange(ActualPage, !AlarmSelected);
 		RefreshAlarmStatus(AlarmItem, AlarmSelected);
@@ -736,6 +775,7 @@ static void DrawAlarmStatusPage()
 			case B_UP:
 			case B_DOWN:
 				AlarmSelected = !AlarmSelected;
+				Refresh = true;
 				break;
 			case B_LEFT:
 				if(AlarmSelected)
@@ -752,9 +792,11 @@ static void DrawAlarmStatusPage()
 					else
 						ActualPage = 0;
 				}
+				Refresh = true;
 				break;
 			case B_OK:
 				RefreshPage.stop();
+				ClearScreen(true);
 				ExitAlarmStatusPage = true;
 				break;
 			default:
@@ -781,14 +823,19 @@ static void RefreshResetList(uint8_t ResetItem, bool ResetSelected)
 
 static void DrawResetPage()
 {
-	bool ExitResetPage = false, ResetSelected = false;
+	bool ExitResetPage = false, ResetSelected = false, Refresh = true;
 	uint8_t ResetItem = 0;
 	RefreshPage.restart();
 	while(!ExitResetPage)
 	{
 		TaskManagement();
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+		if(Refresh)
+		{
+			Refresh = false;
 			ClearScreen(true);
+		}
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearTopBottomBar();
 		DrawTopInfoBar();
 		DrawPageChange(ActualPage, !ResetSelected);
 		RefreshResetList(ResetItem, ResetSelected);
@@ -798,6 +845,7 @@ static void DrawResetPage()
 			case B_UP:
 			case B_DOWN:
 				ResetSelected = !ResetSelected;
+				Refresh = true;
 				break;
 			case B_LEFT:
 				if(ResetSelected)
@@ -814,16 +862,19 @@ static void DrawResetPage()
 					else
 						ActualPage = 0;
 				}
+				Refresh = true;
 				break;
 			case B_OK:
 				if(ResetSelected)
 				{
 					WichReset(ResetItem);
 					DrawPopUp("Reset eseguito", 1500);
+					Refresh = true;
 				}
 				else
 				{
 					RefreshPage.stop();
+					ClearScreen(true);
 					ExitResetPage = true;
 				}
 				break;
@@ -842,11 +893,12 @@ static void RefreshDemoAct(bool DemoActive, bool ChangeDemoStatus)
 	if(DemoActive)
 	{
 		Display.setTextColor(TFT_RED);
+		DemoStr = "ABILITATO";
 	}
 	else
 	{
 		Display.setTextColor(TFT_GREEN);
-		DemoStr = "ABILITATO";
+		
 	}
 	Display.drawString(DemoStr, CENTER_POS(DemoStr), 70);
 	Display.setTextColor(TFT_WHITE);
@@ -857,13 +909,18 @@ static void RefreshDemoAct(bool DemoActive, bool ChangeDemoStatus)
 
 static void DrawDemoActPage()
 {
-	bool ExitDemoPage = false, ChangeDemoStatus = false;
+	bool ExitDemoPage = false, ChangeDemoStatus = false, Refresh = true;
 	bool DemoActive = EnableSimulation;
 	while(!ExitDemoPage)
 	{
 		TaskManagement();
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+		if(Refresh)
+		{
+			Refresh = false;
 			ClearScreen(true);
+		}
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearTopBottomBar();
 		DrawTopInfoBar();
 		DrawPageChange(ActualPage, !ChangeDemoStatus);
 		RefreshDemoAct(DemoActive, ChangeDemoStatus);
@@ -873,6 +930,7 @@ static void DrawDemoActPage()
 			case B_UP:
 			case B_DOWN:
 				ChangeDemoStatus = !ChangeDemoStatus;
+				Refresh = true;
 				break;
 			case B_LEFT:
 				if(ChangeDemoStatus)
@@ -884,14 +942,23 @@ static void DrawDemoActPage()
 					else
 						ActualPage = 0;
 				}
+				Refresh = true;
 				break;
 			case B_OK:
-				EnableSimulation = DemoActive;
-				if(DemoActive)
-					DrawPopUp("DEMO ON", 1000);
+				if(ChangeDemoStatus)
+				{
+					EnableSimulation = DemoActive;
+					if(DemoActive)
+						DrawPopUp("DEMO ON", 1000);
+					else
+						DrawPopUp("DEMO OFF", 1000);
+				}
 				else
-					DrawPopUp("DEMO OFF", 1000);
-				ExitDemoPage = true;
+				{
+					RefreshPage.stop();
+					ClearScreen(true);
+					ExitDemoPage = true;
+				}
 				break;
 			default:
 				break;

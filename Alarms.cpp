@@ -7,7 +7,7 @@
 
 ALARM_S Alarms[MAX_ALARM] = 
 {
-	{	0.0,		 14.0, 	 &Measures.CurrentRMS	  ,    false, 	false,	 false ,	0, 	NO_THR, 0},
+	{	0.0,		  3.0, 	 &Measures.CurrentRMS	  ,    false, 	false,	 false ,	0, 	NO_THR, 0},
 	{	0.0,		230.0, 	 &Measures.VoltageRMS	  ,    false, 	false,	 false ,	0, 	NO_THR, 0},
 	{	0.0,	   2000.0, 	 &Measures.ActivePower	  ,    false, 	false,	 false ,	0, 	NO_THR, 0},
 	{ -50.0,		 50.0, 	 &Measures.ReactivePower  ,    false, 	false,	 false ,	0, 	NO_THR, 0},

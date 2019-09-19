@@ -4,7 +4,7 @@
 
 #define N_OF_SHIFT_REG	1
 
-#define TEST_RELE_EXIT
+#undef TEST_RELE_EXIT
 
 SHIFTY_REG ShiftReg;
 RELE_LIB   Rele;
