@@ -205,6 +205,7 @@ void DrawPopUp(const char *Text, uint16_t Delay)
 
 static void DrawTopInfoBar()
 {
+	String FWVers = "v" + String(FW_VERSION);
 	Display.fillRect( 0,  0,  Display.width(),  13 , BG_COLOR);
 	Display.setFreeFont(FM9);
 	int IconsXPos = 0;
@@ -224,6 +225,8 @@ static void DrawTopInfoBar()
 	}
 	if(EnableSimulation)
 		Display.drawString("DEMO", IconsXPos + 65, TOP_POS);
+	else
+		Display.drawString(FWVers, IconsXPos + 65, TOP_POS);
 }
 
 static void DrawPageChange(int8_t Page, bool Selected)
