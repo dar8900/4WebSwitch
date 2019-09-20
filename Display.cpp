@@ -99,6 +99,11 @@ const REFORMAT ReformatTab[] =
 
 };
 
+const char *ParamsTitle[] = 
+{
+	"Stato WiFi",
+	""
+};
 
 const char *Reset[MAX_RESET_ITEMS] =
 {
@@ -120,6 +125,15 @@ void DisplayInit()
 	Display.init();
 	Display.setRotation(3);
 	Display.fillScreen(BG_COLOR);
+
+}
+
+void DrawWelcomePage()
+{
+	Display.setFreeFont(FMB12);
+	Display.drawRoundRect(0, 0, Display.width(), Display.height(), 5, TFT_WHITE);
+	Display.drawString("Home Microtech", CENTER_POS("Home Microtech"), 50);
+	Display.drawString("4 Web Switch", CENTER_POS("4 Web Switch"), 100);	
 }
 
 static void TaskManagement()
@@ -250,6 +264,7 @@ static void DrawReleStatus()
 static void DrawMainScreen()
 {
 	bool ExitMainScreen = false;
+	ClearScreen(true);
 	RefreshPage.restart();
 	while(!ExitMainScreen)
 	{
@@ -286,8 +301,8 @@ static void DrawMainScreen()
 
 static uint8_t SearchRange(double Value)
 {
-	int i = 0;
-	for(i = 0; i < 13; i++)
+	int i = 0, TabRangeLen = (sizeof(ReformatTab)/ sizeof(ReformatTab[0]));
+	for(i = 0; i < TabRangeLen; i++)
 	{
 		if(Value < ReformatTab[i].Value)
 		{
@@ -565,9 +580,11 @@ static void ModifyAlarm(uint8_t AlarmItem)
 	{
 		if(Refresh)
 		{
-			ClearScreen(false);
 			Refresh = false;
+			ClearScreen(true);
 		}
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearTopBottomBar();
 		DrawTopInfoBar();
 
 		if(Enabled)
@@ -579,20 +596,21 @@ static void ModifyAlarm(uint8_t AlarmItem)
 		else
 			DisconnectStr = "DISABILITATA";
 		Display.setFreeFont(FMB9);
-		Display.drawString("Abilita allarme",  CENTER_POS("Abilita allarme"), 50);
-		Display.drawString("Abilita disconn.", CENTER_POS("Abilita disconn."), 120);
+		Display.drawString(AlarmsName[AlarmItem],  CENTER_POS(AlarmsName[AlarmItem]), 50);
+		Display.drawString("Abilita allarme",  CENTER_POS("Abilita allarme"), 90);
+		Display.drawString("Abilita disconn.", CENTER_POS("Abilita disconn."), 160);
 		Display.setFreeFont(FMB12);
-		Display.drawString(DisabledStr, CENTER_POS(DisabledStr), 80);
-		Display.drawString(DisconnectStr, CENTER_POS(DisconnectStr), 150);
+		Display.drawString(DisabledStr, CENTER_POS(DisabledStr), 120);
+		Display.drawString(DisconnectStr, CENTER_POS(DisconnectStr), 190);
 		if(ItemToModify == 0)
 		{
-			Display.drawRoundRect( CENTER_POS(DisabledStr) - 4,  80  - 4,  Display.textWidth(DisabledStr) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
-			Display.drawRoundRect( CENTER_POS(DisconnectStr) - 4,  150  - 4,  Display.textWidth(DisconnectStr) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
+			Display.drawRoundRect( CENTER_POS(DisabledStr) - 4,  120  - 4,  Display.textWidth(DisabledStr) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
+			Display.drawRoundRect( CENTER_POS(DisconnectStr) - 4,  190  - 4,  Display.textWidth(DisconnectStr) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
 		}
 		else
 		{
-			Display.drawRoundRect( CENTER_POS(DisabledStr) - 4,  80  - 4,  Display.textWidth(DisabledStr) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
-			Display.drawRoundRect( CENTER_POS(DisconnectStr) - 4,  150  - 4,  Display.textWidth(DisconnectStr) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
+			Display.drawRoundRect( CENTER_POS(DisabledStr) - 4,  120  - 4,  Display.textWidth(DisabledStr) + 4,  Display.fontHeight() + 4,  2,  BG_COLOR);
+			Display.drawRoundRect( CENTER_POS(DisconnectStr) - 4,  190  - 4,  Display.textWidth(DisconnectStr) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
 		}
 
 		ButtonPress = CheckButtons();
@@ -646,9 +664,9 @@ static void ModifyAlarm(uint8_t AlarmItem)
 				break;
 		}
 		ExitCnt++;
-		// if(ExitCnt == 125)
-			// ExitModifyAlarm = true;
-		delay(80);
+		if(ExitCnt == 125)
+			ExitModifyAlarm = true;
+		delay(LOOPS_DELAY);
 	}
 }
 

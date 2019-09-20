@@ -5,6 +5,8 @@
 #include "Rele.h"
 #include "Web.h"
 
+Chrono AlarmDelay(Chrono::SECONDS), AlarmReleDisconnectDelay(Chrono::SECONDS);
+
 ALARM_S Alarms[MAX_ALARM] = 
 {
 	{	0.0,		  3.0, 	 &Measures.CurrentRMS	  ,    false, 	false,	 false ,	0, 	NO_THR, 0},
@@ -46,7 +48,7 @@ const char *OverThrAlarmMessage[MAX_ALARM] =
 };
 
 
-bool AlarmActive;
+bool AlarmActive, ReleAlreadyDisconnected;
 
 static void ControlAlarmsThr()
 {
@@ -100,8 +102,10 @@ static void AlarmsReleDisconnect()
 	{
 		if(Alarms[AlarmIndex].EnableDisconnection)
 		{
-			if(Alarms[AlarmIndex].IsActive && Alarms[AlarmIndex].WichThr == OVER_THR)
+			if(Alarms[AlarmIndex].IsActive && Alarms[AlarmIndex].WichThr == OVER_THR && 
+				AlarmReleDisconnectDelay.hasPassed(5, true) && !ReleAlreadyDisconnected)
 			{
+				ReleAlreadyDisconnected = true;
 				TurnAllRele(STATUS_OFF);
 			}
 		}
@@ -133,6 +137,12 @@ void TaskAlarm()
 {
 	ControlAlarmsThr();
 	AlarmsReleDisconnect();
-	AlarmActive = CheckAlarms();
+	if(CheckAlarms())
+	{
+		if(AlarmDelay.hasPassed(5, true) && !AlarmActive)
+			AlarmActive = true;
+	}
+	else
+		AlarmActive = false;
 }
 

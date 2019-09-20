@@ -22,7 +22,7 @@
 
 #define ALARMS_OCCUR_START_ADDR		   250
 
-
+#define SETUP_PARAMS_ADDR			   300
 
 #define TIMER_EEPROM_SAVE(Min)         (Min * 60)
 

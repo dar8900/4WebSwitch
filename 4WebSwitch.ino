@@ -30,7 +30,9 @@ void setup()
 	AnalogBegin();
 #ifdef TASK_DISPLAY	
 	DisplayInit();
+	DrawWelcomePage();
 #endif	
+
 #ifdef TASK_WEB
 	WifiInit();
 #endif	

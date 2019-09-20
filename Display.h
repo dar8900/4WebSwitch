@@ -84,6 +84,7 @@ typedef enum
 }RESET_ITEMS;
 
 void DisplayInit(void);
+void DrawWelcomePage(void);
 void DrawPopUp(const char *Text, uint16_t Delay);
 
 void TaskDisplay(void);
