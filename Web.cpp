@@ -252,8 +252,8 @@ void WifiInit()
 #ifdef ALEXA			
 			AlexaInit();
 #endif			
-			String IP_popup = "IP: " + IPAddr();
-			DrawPopUp(IP_popup.c_str(), 1500);
+			String IP_popup = IPAddr();
+			DrawWiFiConnPage(String(MyNetworksList[MyDeviceList].SSID), IP_popup);
 		}
 		GetTime();
 		WifiSignal = GetWifiSignalPower();

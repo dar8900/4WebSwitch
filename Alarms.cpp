@@ -66,7 +66,7 @@ static void ControlAlarmsThr()
 				if(ActualMeasure >= Alarms[AlarmIndex].HighThr)
 				{
 					Alarms[AlarmIndex].IsActive = true;
-					Alarms[AlarmIndex].WichThr = OVER_THR;		
+					Alarms[AlarmIndex].WichThr = OVER_THR;	
 					Alarms[AlarmIndex].Occurences++;
 					Alarms[AlarmIndex].AlarmTime = TimeInSecond;
 				}
@@ -84,6 +84,13 @@ static void ControlAlarmsThr()
 				{
 					Alarms[AlarmIndex].IsActive = false;
 					Alarms[AlarmIndex].WichThr = NO_THR;
+				}
+				else
+				{
+					if(ActualMeasure <= Alarms[AlarmIndex].LowThr && Alarms[AlarmIndex].WichThr == OVER_THR)
+						Alarms[AlarmIndex].IsActive = false;
+					if(ActualMeasure >= Alarms[AlarmIndex].HighThr && Alarms[AlarmIndex].WichThr == UNDER_THR)
+						Alarms[AlarmIndex].IsActive = false;					
 				}
 			}
 		}
@@ -130,7 +137,10 @@ void ResetAlarms()
 	{
 		Alarms[i].Occurences = 0;
 		Alarms[i].AlarmTime = 0;
+		if(Alarms[i].IsActive)
+			Alarms[i].IsActive = false;
 	}
+	AlarmActive = false;
 }
 
 void TaskAlarm()
@@ -143,6 +153,9 @@ void TaskAlarm()
 			AlarmActive = true;
 	}
 	else
+	{
+		AlarmDelay.restart();
 		AlarmActive = false;
+	}
 }
 

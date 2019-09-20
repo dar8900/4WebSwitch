@@ -85,6 +85,8 @@ typedef enum
 
 void DisplayInit(void);
 void DrawWelcomePage(void);
+void DrawWiFiConnPage(String SSID, String IP_popup);
+void ClearScreen(bool FullScreen);
 void DrawPopUp(const char *Text, uint16_t Delay);
 
 void TaskDisplay(void);

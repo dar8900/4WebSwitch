@@ -44,7 +44,7 @@ const char * DisplayPages[MAX_PAGES] =
 	"Rele"          ,
 	"Setup"         ,
 	"Setup allarmi" ,
-	"Allarmi"       ,
+	"Stato allarmi" ,
 	"Reset"         ,
 	"Demo"          ,
 };
@@ -111,7 +111,7 @@ const char *Reset[MAX_RESET_ITEMS] =
 	"Reset energie parziali",
 	"Reset max e min",
 	"Reset medie",
-	"Reset n. allarmi",
+	"Reset allarmi",
 	"Restart switch",
 };
 
@@ -134,6 +134,22 @@ void DrawWelcomePage()
 	Display.drawRoundRect(0, 0, Display.width(), Display.height(), 5, TFT_WHITE);
 	Display.drawString("Home Microtech", CENTER_POS("Home Microtech"), 50);
 	Display.drawString("4 Web Switch", CENTER_POS("4 Web Switch"), 100);	
+}
+
+void DrawWiFiConnPage(String SSID, String IP_popup)
+{
+	ClearScreen(true);
+	Display.setFreeFont(FMB9);
+	Display.drawRoundRect(0, 0, Display.width(), Display.height(), 5, TFT_WHITE);
+	Display.drawString("Connesso a:", CENTER_POS("Connesso a:"), 50);
+	Display.setFreeFont(FMB12);
+	Display.drawString(SSID, CENTER_POS(SSID), 80);	
+	Display.setFreeFont(FMB9);
+	Display.drawString("IP:", CENTER_POS("IP:"), 150);
+	Display.setFreeFont(FMB12);
+	Display.drawString(IP_popup, CENTER_POS(IP_popup), 180);
+	delay(2000);
+	ClearScreen(true);
 }
 
 static void TaskManagement()
@@ -174,7 +190,7 @@ static void WichReset(uint8_t ResetItem)
 }
 
 
-static void ClearScreen(bool FullScreen)
+void ClearScreen(bool FullScreen)
 {
 	int Ypos;
 	if(FullScreen)
@@ -603,8 +619,17 @@ static void ModifyAlarm(uint8_t AlarmItem)
 		Display.drawString("Abilita allarme",  CENTER_POS("Abilita allarme"), 90);
 		Display.drawString("Abilita disconn.", CENTER_POS("Abilita disconn."), 160);
 		Display.setFreeFont(FMB12);
+		if(Enabled)
+			Display.setTextColor(TFT_RED);
+		else
+			Display.setTextColor(TFT_GREEN);			
 		Display.drawString(DisabledStr, CENTER_POS(DisabledStr), 120);
+		if(Disconnect)
+			Display.setTextColor(TFT_RED);
+		else
+			Display.setTextColor(TFT_GREEN);		
 		Display.drawString(DisconnectStr, CENTER_POS(DisconnectStr), 190);
+		Display.setTextColor(TFT_WHITE);
 		if(ItemToModify == 0)
 		{
 			Display.drawRoundRect( CENTER_POS(DisabledStr) - 4,  120  - 4,  Display.textWidth(DisabledStr) + 4,  Display.fontHeight() + 4,  2,  TFT_WHITE);
