@@ -52,7 +52,7 @@ fauxmoESP AlexaControl;
 String TimeFormatted = ""; 
 String DateFormatted = ""; 
 
-Chrono GetTimeTimer(Chrono::SECONDS);
+Chrono GetTimeTimer(Chrono::SECONDS), ConnectionTimeOut(Chrono::SECONDS);
 
 Chrono ToggleRele1Timer;
 
