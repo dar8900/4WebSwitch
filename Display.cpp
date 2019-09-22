@@ -9,6 +9,7 @@
 #include "Free_Fonts.h"
 #include "Icons.h"
 #include "Alarms.h"
+#include "EepromSwitch.h"
 
 // #define TEST_DISPLAY
 #define BG_COLOR			TFT_BLACK
@@ -22,11 +23,11 @@
 #define MEASURE_IN_PAGE 	3
 
 #define REFRESH_DELAY	     1000
-#define LOOPS_DELAY		     50
+#define LOOPS_DELAY		     25
 
 TFT_eSPI Display = TFT_eSPI();
 
-Chrono RefreshPage, RefreshMeasure;
+Chrono RefreshPage, RefreshMeasure, SaveIconTimer;
 
 
 const unsigned char *WifiIcons[] =
@@ -99,11 +100,22 @@ const REFORMAT ReformatTab[] =
 
 };
 
-const char *ParamsTitle[] = 
+const ENUM_VALUE WifiEnum[2] = 
 {
-	"Stato WiFi",
-	""
+	{"SPENTO", DISABILITATO},
+	{"ACCESO", ABILITATO},
 };
+
+SETUP_PARAMS SetupParams[MAX_SETUP_ITEMS] = 
+{
+	{"Stato WiFi"		, ABILITATO, ABILITATO, DISABILITATO, ENUME_TYPE, WifiEnum,  NULL},
+	{"Delay salvataggio",        15,        60,            1, VALUE_TYPE, NULL    , "min"},
+};
+
+
+
+
+
 
 const char *Reset[MAX_RESET_ITEMS] =
 {
@@ -158,6 +170,7 @@ static void TaskManagement()
 		TaskMeasure();
 	TaskAlarm();
 	TaskWeb();
+	TaskEeprom();
 	RefreshReleStatistics();
 }
 
@@ -231,6 +244,12 @@ static void DrawTopInfoBar()
 	Display.drawXBitmap(IconsXPos + 10, 0, WifiIcons[WifiSignal], 12, 12, TFT_CYAN);
 	if(AlarmActive)
 		Display.drawXBitmap(IconsXPos + 24, 0, Alarms_bits, 12, 12, TFT_YELLOW);
+	if(SaveAccomplished)
+	{
+		Display.drawXBitmap(148, 0, Alarms_bits, 12, 12, TFT_YELLOW);	
+		if(SaveIconTimer.hasPassed(2000, true))
+			SaveAccomplished = false;
+	}
 	IconsXPos = IconsXPos + 46;
 	for(int i = 0; i < N_RELE; i++)
 	{
@@ -288,8 +307,8 @@ static void DrawMainScreen()
 	while(!ExitMainScreen)
 	{
 		TaskManagement();
-		if(RefreshPage.hasPassed(5000, true))
-			ClearScreen(true);
+		if(RefreshPage.hasPassed(1000, true))
+			ClearTopBottomBar();
 		DrawTopInfoBar();
 		DrawPageChange(ActualPage, true);
 		DrawReleStatus();
@@ -407,7 +426,7 @@ static void DrawMeasurePage()
 	while(!ExitMeasurePage)
 	{
 		TaskManagement();
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+		if(RefreshPage.hasPassed(3000, true))
 			ClearScreen(true);
 		DrawTopInfoBar();
 		DrawPageChange(ActualPage, true);
@@ -528,42 +547,124 @@ static void DrawRelePage()
 	}
 }
 
-static void RefreshSetupPage(uint8_t SetupItem, bool SetupSelected)
+static void RefreshSetupPage(uint8_t SetupItem, bool SetupSelected, bool ChangeParams, uint16_t ParamValue)
 {
-
+	String ParamValueStr = "";
+	Display.setFreeFont(FMB9);
+	Display.drawString(SetupParams[SetupItem].ParamTitle, CENTER_POS(SetupParams[SetupItem].ParamTitle), 50);
+	Display.setFreeFont(FMB18);
+	if(SetupParams[SetupItem].Type == ENUME_TYPE)
+	{
+		Display.setTextColor(TFT_GREENYELLOW);
+		ParamValueStr = String(SetupParams[SetupItem].EnumList[ParamValue].EnumTitle);
+		Display.setTextColor(TFT_GREENYELLOW);
+		Display.drawString(ParamValueStr, CENTER_POS(ParamValueStr), 100);
+		Display.setTextColor(TFT_WHITE);		
+	}
+	else
+	{
+		Display.setTextColor(TFT_GREENYELLOW);
+		ParamValueStr = String(ParamValue);
+		Display.setTextColor(TFT_GREENYELLOW);
+		Display.drawString(ParamValueStr, CENTER_POS(ParamValueStr), 100);
+		Display.setTextColor(TFT_WHITE);				
+	}
+	if(SetupSelected)
+	{
+		Display.drawRoundRect(CENTER_POS(ParamValueStr) - 4, 96, Display.textWidth(ParamValueStr) + 6, Display.fontHeight() + 2 , 2, TFT_WHITE);
+		if(ChangeParams)	
+		{
+			Display.drawRoundRect(CENTER_POS(ParamValueStr) - 10, 90, Display.textWidth(ParamValueStr) + 18, Display.fontHeight() + 15, 2, TFT_RED);			
+		}
+	}
+	if(SetupParams[SetupItem].Udm != NULL)
+	{
+		Display.setFreeFont(FMB9);
+		Display.drawString(SetupParams[SetupItem].Udm, CENTER_POS(SetupParams[SetupItem].Udm), 145);		
+	}
 }
 
 
 static void DrawSetupPage()
 {
-	bool ExitSetupPage = false, SetupSelected = false;
+	bool ExitSetupPage = false, SetupSelected = false, ChangeParams = false, Refresh = true;
 	uint8_t SetupItem = 0;
+	uint16_t ParamValue = 0;
+	ParamValue = SetupParams[SetupItem].Value;
 	while(!ExitSetupPage)
 	{
 		TaskManagement();
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+		if(Refresh)
+		{
+			Refresh = false;
 			ClearScreen(true);
+		}
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearTopBottomBar();
 		DrawTopInfoBar();
 		DrawPageChange(ActualPage, !SetupSelected);
-		RefreshSetupPage(SetupItem, SetupSelected);
+		RefreshSetupPage(SetupItem, SetupSelected, ChangeParams, ParamValue);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
 		{
 			case B_UP:
-
+				if(ChangeParams)
+				{
+					if(ParamValue > SetupParams[SetupItem].MinVal)
+						ParamValue--;
+					else
+						ParamValue = SetupParams[SetupItem].MaxVal;
+				}
+				else
+					SetupSelected = !SetupSelected;
+				Refresh = true;
 				break;
 			case B_DOWN:
-
+				if(ChangeParams)
+				{
+					if(ParamValue < SetupParams[SetupItem].MaxVal)
+						ParamValue++;
+					else
+						ParamValue = SetupParams[SetupItem].MinVal;					
+				}
+				else
+					SetupSelected = !SetupSelected;
+				Refresh = true;
 				break;
 			case B_LEFT:
-				if(ActualPage < MAX_PAGES - 1)
-					ActualPage++;
+				if(SetupSelected)
+				{
+					if(SetupItem < MAX_SETUP_ITEMS - 1)
+						SetupItem++;
+					else
+						SetupItem = 0;
+					ParamValue = SetupParams[SetupItem].Value;
+				}
 				else
-					ActualPage = 0;
+				{
+					if(ActualPage < MAX_PAGES - 1)
+						ActualPage++;
+					else
+						ActualPage = 0;
+				}
+				Refresh = true;
 				break;
 			case B_OK:
-				ClearScreen(true);
-				ExitSetupPage = true;
+				if(SetupSelected)
+				{
+					if(ChangeParams)
+					{
+						SetupParams[SetupItem].Value = ParamValue;
+						SaveParameters();
+					}
+					ChangeParams = !ChangeParams;
+					Refresh = true;
+				}
+				else
+				{
+					ClearScreen(true);
+					ExitSetupPage = true;					
+				}
 				break;
 			default:
 				break;
@@ -779,8 +880,18 @@ static void RefreshAlarmStatus(uint8_t AlarmItem, bool AlarmStatusSelected)
 		{
 			Display.drawString(OverThrAlarmMessage[AlarmItem], CENTER_POS(OverThrAlarmMessage[AlarmItem]), Display.fontHeight() + 50);
 		}
-		String AlarmTime = FormatTime(Alarms[AlarmItem].AlarmTime, true), AlarmDate = FormatDate(Alarms[AlarmItem].AlarmTime);
-		String OccurenceStr = String(Alarms[AlarmItem].Occurences);
+		String AlarmTime = "", AlarmDate = "";
+		if(Alarms[AlarmItem].AlarmTime != 0)
+		{
+			AlarmTime = FormatTime(Alarms[AlarmItem].AlarmTime, true);
+			AlarmDate = FormatDate(Alarms[AlarmItem].AlarmTime);
+		}
+		else
+		{
+			AlarmTime = "N.A.";
+			AlarmDate = "N.A.";
+		}
+		String OccurenceStr = "N. allarmi: " + String(Alarms[AlarmItem].Occurences);
 		Display.drawString(AlarmTime, CENTER_POS(AlarmTime), Display.fontHeight() + 70);
 		Display.drawString(AlarmDate, CENTER_POS(AlarmDate), Display.fontHeight() + 90);
 		Display.drawString(OccurenceStr, CENTER_POS(OccurenceStr), Display.fontHeight() + 110);

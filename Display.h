@@ -1,6 +1,15 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
+enum
+{
+	DISABILITATO = 0,
+	ABILITATO
+};
+
+
+
+
 typedef enum
 {
 	MAIN_PAGE = 0,        // 0
@@ -72,6 +81,37 @@ typedef struct
 	void (*MenuFunc)(void);
 }MENU_ITEM_S;
 
+
+typedef enum
+{
+	WIFI_STATUS = 0,
+	EEPROM_SAVE_DELAY,
+	MAX_SETUP_ITEMS
+}SETUP_ITEMS;
+
+typedef enum
+{
+	ENUME_TYPE = 0,
+	VALUE_TYPE
+}PARAMETER_TYPE;
+
+typedef struct
+{
+	const char *EnumTitle;
+	const uint8_t EnumValue;
+}ENUM_VALUE;
+
+typedef struct
+{
+	const char    *ParamTitle;
+	uint16_t       Value;
+	const uint16_t MaxVal; 
+	const uint16_t MinVal;	
+	const uint8_t  Type;
+	const ENUM_VALUE  *EnumList;
+	const char *Udm;
+}SETUP_PARAMS;
+
 typedef enum
 {
 	RESET_ENERGIES = 0,
@@ -82,6 +122,9 @@ typedef enum
 	RESTART_MCU,
 	MAX_RESET_ITEMS
 }RESET_ITEMS;
+
+extern SETUP_PARAMS SetupParams[];
+
 
 void DisplayInit(void);
 void DrawWelcomePage(void);

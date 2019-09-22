@@ -26,7 +26,7 @@ void setup()
 	Wire.begin(5, 4);
 #endif	
 	Serial.begin(115200);
-	// EepromInit();
+	EepromInit();
 	AnalogBegin();
 #ifdef TASK_DISPLAY	
 	DisplayInit();

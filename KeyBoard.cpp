@@ -14,14 +14,14 @@ uint8_t CheckButtons()
 	for(int i = 0; i < ADC_KEY_SAMPLE; i++)
 		AdcVal += analogRead(A0);
 	AdcToVolt = ADC_CONV_TO_V(AdcVal / ADC_KEY_SAMPLE);
-
+	// DBG("AdcToVolt:" + String(AdcToVolt));
 	if(AdcToVolt > 3) // 1k 10k
 		return B_UP;
 	else if(AdcToVolt > 2.8) // 2k 10k
 		return B_DOWN;
-	else if(AdcToVolt > 2.6) // 3k 10kR 
+	else if(AdcToVolt > 2.55) // 3k 10kR 
 		return B_LEFT;
-	else if(AdcToVolt > 2.5) // 4k 10kR 
+	else if(AdcToVolt > 2.4) // 4k 10kR 
 		return B_OK;		
 	else
 		return NO_PRESS;

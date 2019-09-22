@@ -231,7 +231,7 @@ void WifiInit()
 		}
 	}
 	
-	if(MyDeviceFounded)
+	if(MyDeviceFounded && SetupParams[WIFI_STATUS].Value == ABILITATO)
 	{
 		WiFi.begin(MyNetworksList[MyDeviceList].SSID, MyNetworksList[MyDeviceList].Passwd);
 		Serial.print("Connecting...");

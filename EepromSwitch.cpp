@@ -3,6 +3,7 @@
 #include "Rele.h"
 #include "EepromSwitch.h"
 #include "Alarms.h"
+#include "Display.h"
 #include <EEPROM.h>
 
 #define NODE_MCU_EEPROM_SIZE	       512
@@ -12,6 +13,7 @@
 #define RELE_OCCUR_SIZE					 2
 #define RELE_POWERON_SIZE				 sizeof(int)
 #define ALARMS_OCCUR_SIZE				 sizeof(int)
+#define SETUP_PARAM_VALUE_SIZE		     2
 
 #define FIRST_CHECK_VAR_ADDR		     0
 #define ENERGIES_START_ADDR			     1
@@ -26,7 +28,18 @@
 
 #define TIMER_EEPROM_SAVE(Min)         (Min * 60)
 
+
+
 Chrono  EepromSaveTimer(Chrono::SECONDS);
+
+bool SaveAccomplished;
+
+const uint16_t DfltParamValues[MAX_SETUP_ITEMS]
+{
+	DFLT_WIFI_STATUS,
+	DFLT_SAVE_DELAY	,
+};
+
 
 static bool IsEmpty = false;
 
@@ -134,6 +147,17 @@ static void SaveAlarmsOccurence()
 	EEPROM.put(EepromAddrInit, Alarms[APPARENT_POWER].Occurences);
 	EepromAddrInit += ALARMS_OCCUR_SIZE;
 	EEPROM.put(EepromAddrInit, Alarms[PF].Occurences);
+}
+
+void SaveParameters()
+{
+	int EepromAddrInit = SETUP_PARAMS_ADDR;
+	for(int i = 0; i < MAX_SETUP_ITEMS; i++)
+	{
+		EEPROM.put(EepromAddrInit, SetupParams[i].Value);
+		EepromAddrInit += SETUP_PARAM_VALUE_SIZE;
+	}
+	EEPROM.commit();
 }
 
 static void LoadEnergies()
@@ -248,6 +272,15 @@ static void LoadAlarmsOccurence()
 	EEPROM.get(EepromAddrInit, Alarms[PF].Occurences);
 }
 
+static void LoadParameters()
+{
+	int EepromAddrInit = SETUP_PARAMS_ADDR;
+	for(int i = 0; i < MAX_SETUP_ITEMS; i++)
+	{
+		EEPROM.get(EepromAddrInit, SetupParams[i].Value);
+		EepromAddrInit += SETUP_PARAM_VALUE_SIZE;
+	}
+}
 
 static void CheckFirstGo()
 {
@@ -271,23 +304,27 @@ void EepromInit()
 	CheckFirstGo();
 	if(!IsEmpty)
 	{
-		LoadEnergies();
-		LoadMaxMinAvg();
-		LoadReleSatus();
-		LoadReleStatistics();
-		LoadAlarmsOccurence();
+		// LoadEnergies();
+		// LoadMaxMinAvg();
+		// LoadReleSatus();
+		// LoadReleStatistics();
+		// LoadAlarmsOccurence();
+		LoadParameters();
 	}
 }
 
 void TaskEeprom()
 {
-	if(EepromSaveTimer.hasPassed(TIMER_EEPROM_SAVE(15), true))
+	if(EepromSaveTimer.hasPassed(TIMER_EEPROM_SAVE(SetupParams[EEPROM_SAVE_DELAY].Value), true))
 	{
-		SaveEnergies();
-		SaveMaxMinAvg();
+		// SaveEnergies();
+		// SaveMaxMinAvg();
 		SaveReleSatus();
-		SaveReleStatistics();
-		SaveAlarmsOccurence();
+		// SaveReleStatistics();
+		// SaveAlarmsOccurence();
+		
 		EEPROM.commit();
+		SaveAccomplished = true;
 	}
+
 }
