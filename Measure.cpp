@@ -213,34 +213,6 @@ void AnalogBegin()
 // #endif
 }
 
-// Tempo impigegato teoricamente 25ms
-// static bool SearchZeroV()
-// {
-	// int Sample = 0;
-	// bool ZeroVFound = false;
-	// float ZeroAdc = 0.0;
-	// AnalogBoard.setMultiplexer(ADC_VOLTAGE_EXIT);
-	// while(Sample < ADC_SAMPLING_RATE)
-	// {
-		// ZeroAdc += (AnalogBoard.getVolts(true) - VOLTAGE_VOLT_CORRECTION);
-		// if(Sample % 4)
-		// {
-			// ZeroAdc /= 4;
-			// DBG(ZeroAdc);
-			// if(ZeroAdc > -0.010 && ZeroAdc < 0.010)
-			// {
-				// ZeroVFound = true;
-				// break;
-			// }
-			// ZeroAdc = 0.0;
-		// }
-		// Sample++;
-		// delayMicroseconds(1200);
-	// }
-	// return ZeroVFound;
-// }
-
-
 static void CalcMeasure()
 {
 	int Sample = 0;
