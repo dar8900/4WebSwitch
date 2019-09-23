@@ -233,30 +233,41 @@ void WifiInit()
 	
 	if(MyDeviceFounded)
 	{
+		bool ConnectionDone = true;
 		WiFi.begin(MyNetworksList[MyDeviceList].SSID, MyNetworksList[MyDeviceList].Passwd);
 		Serial.print("Connecting...");
 		while (WiFi.status() != WL_CONNECTED)
 		{
-			delay(100);
+			delay(50);
 			Serial.print(".");
+			ConnectionTimeOut.hasPassed(30, true)
+			{
+				ConnectionDone = false;
+				break;
+			}
 		}
 		DBG("");
-		WiFi.hostname(HostName);
-		WiFi.setAutoReconnect(true);
-		
-		// server.begin();
-		timeClient.begin();
-		delay(1000);
-		if(CheckWifiCon())
+		if(ConnectionDone)
 		{
+			WiFi.hostname(HostName);
+			WiFi.setAutoReconnect(true);
+			
+			// server.begin();
+			timeClient.begin();
+			delay(1000);
+			if(CheckWifiCon())
+			{
 #ifdef ALEXA			
-			AlexaInit();
+				AlexaInit();
 #endif			
-			String IP_popup = "IP: " + IPAddr();
-			DrawPopUp(IP_popup.c_str(), 1500);
+				String IP_popup = "IP: " + IPAddr();
+				DrawPopUp(IP_popup.c_str(), 1500);
+			}
+			GetTime();
+			WifiSignal = GetWifiSignalPower();
 		}
-		GetTime();
-		WifiSignal = GetWifiSignalPower();
+		else
+			WifiConnected = false;
 	}
 
 }
