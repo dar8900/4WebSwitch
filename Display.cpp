@@ -68,16 +68,16 @@ const MEASURE_PAGES MeasuresPage[MAX_MEASURE_PAGES] =
 
 const MEASURE_PAGE_LABEL_DES MeasureUdmLabel[MAX_MEASURE_PAGES] PROGMEM =
 {
-	{"I, V, PF"        , "A" , "V"   , " "  , "I"      , "V"      , "PF"      },
-	{"Potenze"	       , "W" , "VAr" , "VA" , "P.att"  , "P.rea"  , "P.app"   },
-	{"Energie tot."    , "Wh", "VArh", "VAh", "E.att"  , "E.rea"  , "E.app"   },
-	{"Energie parz."   , "Wh", "VArh", "VAh", "EP Att" , "EP Rea" , "EP App"  },
-	{"Massimi I, V, PF", "A" , "V"   , " "  , "Max I"  , "Max V"  , "MaxPF"   },
-	{"Massimi potenze" , "W" , "VAr" , "VA" , "MaxPAtt", "MaxPRea", "MaxPApp" },
-	{"Minimi I, V, PF" , "A" , "V"   , " "  , "Min I"  , "Min V"  , "MinPF"   },
-	{"Minimi potenze"  , "W" , "VAr" , "VA" , "MinPAtt", "MinPRea", "MinPApp" },
-	{"Medie I, V, PF"  , "A" , "V"   , " "  , "Avg I"  , "Avg V"  , "AvgPF"   },
-	{"Medie potenze"   , "W" , "VAr" , "VA" , "AvgPAtt", "AvgPRea", "AvgPApp" },
+	{"I, V, PF"        , "A" , "V"   , " "  , "I"        , "V"        , "PF"        },
+	{"Potenze"	       , "W" , "VAr" , "VA" , "P.att"    , "P.rea"    , "P.app"     },
+	{"Energie tot."    , "Wh", "VArh", "VAh", "E.att"    , "E.rea"    , "E.app"     },
+	{"Energie parz."   , "Wh", "VArh", "VAh", "EP Att"   , "EP Rea"   , "EP App"    },
+	{"Massimi I, V, PF", "A" , "V"   , " "  , "Max I"    , "Max V"    , "Max PF"    },
+	{"Massimi potenze" , "W" , "VAr" , "VA" , "Max P Att", "Max P Rea", "Max P App" },
+	{"Minimi I, V, PF" , "A" , "V"   , " "  , "Min I"    , "Min V"    , "Min PF"    },
+	{"Minimi potenze"  , "W" , "VAr" , "VA" , "Min P Att", "Min P Rea", "Min P App" },
+	{"Medie I, V, PF"  , "A" , "V"   , " "  , "Avg I"    , "Avg V"    , "Avg PF"    },
+	{"Medie potenze"   , "W" , "VAr" , "VA" , "Avg P Att", "Avg P Rea", "Avg P App" },
 
 };
 
@@ -108,8 +108,9 @@ const ENUM_VALUE WifiEnum[2] =
 
 SETUP_PARAMS SetupParams[MAX_SETUP_ITEMS] = 
 {
-	{"Stato WiFi"		, ABILITATO, ABILITATO, DISABILITATO, ENUME_TYPE, WifiEnum,  NULL},
-	{"Delay salvataggio",        15,        60,            1, VALUE_TYPE, NULL    , "min"},
+	{"Stato WiFi"		   , ABILITATO, ABILITATO, DISABILITATO, ENUME_TYPE, WifiEnum,  NULL},
+	{"Delay salvataggio"   ,        15,        60,            1, VALUE_TYPE, NULL    , "min"},
+	{"Periodo media misure",        60,      3600,            5, VALUE_TYPE, NULL    ,   "s"},
 };
 
 
@@ -246,8 +247,8 @@ static void DrawTopInfoBar()
 		Display.drawXBitmap(IconsXPos + 24, 0, Alarms_bits, 12, 12, TFT_YELLOW);
 	if(SaveAccomplished)
 	{
-		Display.drawXBitmap(148, 0, Alarms_bits, 12, 12, TFT_YELLOW);	
-		if(SaveIconTimer.hasPassed(2000, true))
+		Display.drawXBitmap(148, 0, SaveIcon_bits, 12, 12, TFT_YELLOW);	
+		if(SaveIconTimer.hasPassed(4000, true))
 			SaveAccomplished = false;
 	}
 	IconsXPos = IconsXPos + 46;
@@ -582,6 +583,9 @@ static void RefreshSetupPage(uint8_t SetupItem, bool SetupSelected, bool ChangeP
 		Display.setFreeFont(FMB9);
 		Display.drawString(SetupParams[SetupItem].Udm, CENTER_POS(SetupParams[SetupItem].Udm), 145);		
 	}
+	Display.setFreeFont(FM9);
+	String SetupPageN = String(SetupItem + 1) + "/" + String(MAX_SETUP_ITEMS);
+	Display.drawString(SetupPageN, CENTER_POS(SetupPageN), 200);
 }
 
 

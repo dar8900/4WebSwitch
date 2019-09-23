@@ -6,7 +6,7 @@
 #include "Display.h"
 #include <EEPROM.h>
 
-#define NODE_MCU_EEPROM_SIZE	       512
+#define NODE_MCU_EEPROM_SIZE	         512
 
 #define MEASURES_SIZE					 sizeof(double)
 #define RELE_STATUS_SIZE			     1
@@ -38,6 +38,7 @@ const uint16_t DfltParamValues[MAX_SETUP_ITEMS]
 {
 	DFLT_WIFI_STATUS,
 	DFLT_SAVE_DELAY	,
+	DFLT_AVG_MEASURE_PERIOD,
 };
 
 
@@ -47,70 +48,23 @@ static void SaveEnergies()
 {
 	int EepromAddrInit = ENERGIES_START_ADDR;
 	EEPROM.put(ENERGIES_START_ADDR, Measures.Energies);
-	// EEPROM.put(EepromAddrInit, Measures.ActiveEnergy);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.ReactiveEnergy);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.ApparentEnergy);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.PartialActiveEnergy);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.PartialReactiveEnergy);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.PartialApparentEnergy);	
+
 }
 
 static void SaveMaxMinAvg()
 {
 	int EepromAddrInit = MAX_MIN_AVG_START_ADDR;
 	EEPROM.put(MAX_MIN_AVG_START_ADDR, Measures.MaxMinAvg);
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MaxCurrent);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MinCurrent);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MaxVoltage);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MinVoltage);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MaxActivePower);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MinActivePower);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MaxReactivePower);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MinReactivePower);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MaxApparentPower);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MinApparentPower);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MaxPowerFactor);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.MinPowerFactor);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.CurrentAvg);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.VoltageAvg);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.ActivePowerAvg);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.ReactivePowerAvg);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.ApparentPowerAvg);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.put(EepromAddrInit, Measures.MaxMinAvg.PowerFactorAvg);	
 }
 
 static void SaveReleSatus()
 {
 	int EepromAddrInit = RELE_STATUS_START_ADDR;
-	EEPROM.write(EepromAddrInit, Rele.getReleStatus(RELE_1));
-	EepromAddrInit += RELE_STATUS_SIZE;
-	EEPROM.write(EepromAddrInit, Rele.getReleStatus(RELE_2));
-	EepromAddrInit += RELE_STATUS_SIZE;
-	EEPROM.write(EepromAddrInit, Rele.getReleStatus(RELE_3));
-	EepromAddrInit += RELE_STATUS_SIZE;
-	EEPROM.write(EepromAddrInit, Rele.getReleStatus(RELE_4));	
+	for(int i = 0; i < N_RELE; i++)
+	{
+		EEPROM.put(EepromAddrInit, Rele.getReleStatus(i));
+		EepromAddrInit += RELE_STATUS_SIZE;		
+	}
 }
 
 static void SaveReleStatistics()
@@ -164,75 +118,25 @@ static void LoadEnergies()
 {
 	int EepromAddrInit = ENERGIES_START_ADDR;
 	EEPROM.get(ENERGIES_START_ADDR, Measures.Energies);
-	// EEPROM.get(EepromAddrInit, Measures.ActiveEnergy);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.ReactiveEnergy);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.ApparentEnergy);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.PartialActiveEnergy);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.PartialReactiveEnergy);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.PartialApparentEnergy);		
 }
 
 static void LoadMaxMinAvg()
 {
 	int EepromAddrInit = MAX_MIN_AVG_START_ADDR;
 	EEPROM.get(MAX_MIN_AVG_START_ADDR, Measures.MaxMinAvg);
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MaxCurrent);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MinCurrent);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MaxVoltage);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MinVoltage);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MaxActivePower);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MinActivePower);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MaxReactivePower);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MinReactivePower);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MaxApparentPower);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MinApparentPower);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MaxPowerFactor);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.MinPowerFactor);
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.CurrentAvg);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.VoltageAvg);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.ActivePowerAvg);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.ReactivePowerAvg);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.ApparentPowerAvg);	
-	// EepromAddrInit += MEASURES_SIZE;
-	// EEPROM.get(EepromAddrInit, Measures.MaxMinAvg.PowerFactorAvg);		
 }
 
 static void LoadReleSatus()
 {
 	int EepromAddrInit = RELE_STATUS_START_ADDR;
-	uint8_t Status = 0;
-	Status = EEPROM.read(EepromAddrInit);
-	SwichReleStatus(RELE_1, Status);
-	EepromAddrInit += RELE_STATUS_SIZE;
-	Status = EEPROM.read(EepromAddrInit);
-	SwichReleStatus(RELE_2, Status);
-	EepromAddrInit += RELE_STATUS_SIZE;
-	Status = EEPROM.read(EepromAddrInit);
-	SwichReleStatus(RELE_3, Status);
-	EepromAddrInit += RELE_STATUS_SIZE;
-	Status = EEPROM.read(EepromAddrInit);
-	SwichReleStatus(RELE_4, Status);	
+	for(int i = 0; i < N_RELE; i++)
+	{
+		uint8_t Status = 0;
+		EEPROM.get(EepromAddrInit, Status);
+		SwichReleStatus(i, Status);
+		EepromAddrInit += RELE_STATUS_SIZE;		
+		delay(1);
+	}	
 	
 }
 
@@ -306,7 +210,7 @@ void EepromInit()
 	{
 		// LoadEnergies();
 		// LoadMaxMinAvg();
-		// LoadReleSatus();
+		LoadReleSatus();
 		// LoadReleStatistics();
 		// LoadAlarmsOccurence();
 		LoadParameters();
