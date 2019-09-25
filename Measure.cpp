@@ -1,6 +1,8 @@
 #include "4WebSwitch.h"
 #include "Measure.h"
 #include "ADS1115.h"
+#include "EepromSwitch.h"
+#include "Display.h"
 
 
 #define SIM_WAVEFORMS
@@ -51,8 +53,8 @@
 ADS1115 AnalogBoard(ADS1115_DEFAULT_ADDRESS);
 
 Chrono CalcEnergyTimer;
-bool OldEnableSim;
-bool EnableSimulation = OldEnableSim = false;
+uint16_t OldEnableSim;
+
 
 double   AdcCurrentValues[ADC_SAMPLING_RATE], AdcVoltageValues[ADC_SAMPLING_RATE], CurrentRmsAcc, VoltageRmsAcc, VoltageRmsAvgAcc, ActivePowerRmsAcc;
 uint32_t EnergyAccumulatorCnt, AvgCounter;
@@ -131,7 +133,7 @@ static void CalcMaxMinAvg()
 	PowerFactorAvgAcc += Measures.PowerFactor;
 	AvgCounter++;
 
-	if(CalcAvgTimer.hasPassed(60, true))
+	if(CalcAvgTimer.hasPassed(EepParamsValue[AVG_MEASURE_PERIOD], true))
 	{
 		if(AvgCounter != 0)
 		{
@@ -398,15 +400,15 @@ void ResetAvg()
 
 void TaskMeasure()
 {
-	if(!EnableSimulation)
+	if(EepParamsValue[SIMULATION_MODE] == ABILITATO)
 		CalcMeasure();
 	else
 		CalcSimCurrentVoltage(false);
 
 	CalcEnergy();
-	if(OldEnableSim != EnableSimulation)
+	if(OldEnableSim != EepParamsValue[SIMULATION_MODE])
 	{
-		OldEnableSim = EnableSimulation;
+		OldEnableSim = EepParamsValue[SIMULATION_MODE];
 		ResetMeasure();
 	}
 }

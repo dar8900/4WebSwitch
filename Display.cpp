@@ -40,14 +40,13 @@ const unsigned char *WifiIcons[] =
 
 const char * DisplayPages[MAX_PAGES] =
 {
-	"Home"          ,
-	"Misure"        ,
-	"Rele"          ,
-	"Setup"         ,
-	"Setup allarmi" ,
-	"Stato allarmi" ,
-	"Reset"         ,
-	"Demo"          ,
+	"Home"            ,
+	"Misure"          ,
+	"Rele"            ,
+	"Setup"           ,
+	"Abilita allarmi" ,
+	"Stato allarmi"   ,
+	"Reset"           ,
 };
 
 const MEASURE_PAGES MeasuresPage[MAX_MEASURE_PAGES] =
@@ -106,11 +105,106 @@ const ENUM_VALUE WifiEnum[2] =
 	{"ACCESO", ABILITATO},
 };
 
-SETUP_PARAMS SetupParams[MAX_SETUP_ITEMS] = 
+const ENUM_VALUE DemoEnum[2] = 
 {
-	{"Stato WiFi"		   , ABILITATO, ABILITATO, DISABILITATO, ENUME_TYPE, WifiEnum,  NULL},
-	{"Delay salvataggio"   ,        15,        60,            1, VALUE_TYPE, NULL    , "min"},
-	{"Periodo media misure",        60,      3600,            5, VALUE_TYPE, NULL    ,   "s"},
+	{"DISABILITATA", DISABILITATO},
+	{"ABILITATA"   , ABILITATO},
+};
+
+const ENUM_VALUE CurrLowThrEnum[MAX_I_LOW_THR] = 
+{
+	{"0.05"  , I_LOW_THR_0_0_5},
+	{"0.1"   , I_LOW_THR_0_1  },
+	{"0.5"   , I_LOW_THR_0_5  },
+	{"1"     , I_LOW_THR_1    },
+	{"1.1"   , I_LOW_THR_1_1  },
+	{"1.5"   , I_LOW_THR_1_5  },	
+};
+
+const ENUM_VALUE CurrHighThrEnum[MAX_I_HIGH_THR] = 
+{
+	{"5.0"   , I_HIGH_THR_5   },
+	{"5.5"   , I_HIGH_THR_5_5 },
+	{"10.0"  , I_HIGH_THR_10  },
+	{"10.5"  , I_HIGH_THR_10_5},
+	{"13.0"  , I_HIGH_THR_13  },
+	{"16.0"  , I_HIGH_THR_16  },	
+};
+
+const ENUM_VALUE PAttHighThrEnum[MAX_P_ATT_HIGH_THR] = 
+{
+	{"1.0" , P_ATT_HIGH_THR_1000},
+	{"1.5" , P_ATT_HIGH_THR_1500},
+	{"1.8" , P_ATT_HIGH_THR_1800},
+	{"2.0" , P_ATT_HIGH_THR_2000},
+	{"2.5" , P_ATT_HIGH_THR_2500},
+	{"2.8" , P_ATT_HIGH_THR_2800},	
+	{"3.0" , P_ATT_HIGH_THR_3000},
+	{"3.4" , P_ATT_HIGH_THR_3400},	
+};
+
+const ENUM_VALUE PReaHighThrEnum[MAX_P_REA_HIGH_THR] = 
+{
+	{"0.05"  , P_REA_HIGH_THR_50  },
+	{"0.1"   , P_REA_HIGH_THR_100 },
+	{"0.25"  , P_REA_HIGH_THR_250 },
+	{"0.5"   , P_REA_HIGH_THR_500 },
+	{"0.8"   , P_REA_HIGH_THR_800 },
+	{"1.0"   , P_REA_HIGH_THR_1000},	
+	
+};
+
+const ENUM_VALUE PAppHighThrEnum[MAX_A_APP_HIGH_THR] = 
+{
+	{"1.0" , P_APP_HIGH_THR_1000},
+	{"1.5" , P_APP_HIGH_THR_1500},
+	{"1.8" , P_APP_HIGH_THR_1800},
+	{"2.0" , P_APP_HIGH_THR_2000},
+	{"2.5" , P_APP_HIGH_THR_2500},
+	{"2.8" , P_APP_HIGH_THR_2800},	
+	{"3.0" , P_APP_HIGH_THR_3000},
+	{"3.4" , P_APP_HIGH_THR_3400},	
+};
+
+const ENUM_VALUE PFLowThrEnum[MAX_PF_THR] = 
+{
+	{"-0.500"  , PF_THR_500},
+	{"-0.600"  , PF_THR_600},
+	{"-0.700"  , PF_THR_700},
+	{"-0.800"  , PF_THR_800},
+	{"-0.850"  , PF_THR_850},
+	{"-0.900"  , PF_THR_900},	
+	{"-0.950"  , PF_THR_950},
+	{"-0.980"  , PF_THR_980},
+	{"-0.990"  , PF_THR_990},
+};
+
+const ENUM_VALUE PFHighThrEnum[MAX_PF_THR] = 
+{
+	{"0.500"  , PF_THR_500},
+	{"0.600"  , PF_THR_600},
+	{"0.700"  , PF_THR_700},
+	{"0.800"  , PF_THR_800},
+	{"0.850"  , PF_THR_850},
+	{"0.900"  , PF_THR_900},	
+	{"0.950"  , PF_THR_950},
+	{"0.980"  , PF_THR_980},
+	{"0.990"  , PF_THR_990},
+};
+
+static const SETUP_PARAMS SetupParams[MAX_SETUP_ITEMS] = 
+{
+	{"Stato WiFi"		          , ABILITATO			 , DISABILITATO         , ENUME_TYPE , WifiEnum       ,  NULL  },
+	{"Delay salvataggio"          ,        60			 ,            1         , VALUE_TYPE , NULL           , "min"  },
+	{"Periodo media misure"       ,      3600			 ,            5         , VALUE_TYPE , NULL           ,   "s"  },
+	{"Simulazione"      		  , ABILITATO			 , DISABILITATO         , ENUME_TYPE , DemoEnum       ,  NULL  },
+	{"Sovra soglia corrente"      , I_HIGH_THR_16		 , I_HIGH_THR_5         , ENUME_TYPE , CurrHighThrEnum,  "A"   },
+	{"Sotto soglia corrente"      , I_LOW_THR_1_5		 , I_LOW_THR_0_0_5      , ENUME_TYPE , CurrLowThrEnum ,  "A"   },
+	{"Sovra soglia p. attiva"     , P_ATT_HIGH_THR_3400  , P_ATT_HIGH_THR_1000	, ENUME_TYPE , PAttHighThrEnum,  "kW"  },
+	{"Sovra soglia p. reattiva"   , P_REA_HIGH_THR_1000  , P_REA_HIGH_THR_50	, ENUME_TYPE , PReaHighThrEnum,  "kVAr"},
+	{"Sovra soglia p. apparente"  , P_APP_HIGH_THR_3400  , P_APP_HIGH_THR_1000	, ENUME_TYPE , PAppHighThrEnum,  "kVA" },
+	{"Sovra soglia PF"            , PF_THR_990			 , PF_THR_500 		    , ENUME_TYPE , PFHighThrEnum  ,  NULL  },
+	{"Sotto soglia PF"            , PF_THR_990			 , PF_THR_500 		    , ENUME_TYPE , PFLowThrEnum   ,  NULL  },	
 };
 
 
@@ -259,7 +353,7 @@ static void DrawTopInfoBar()
 		else
 			Display.fillCircle(IconsXPos + (i * (2 + 4)), 6, 2, TFT_GREEN);
 	}
-	if(EnableSimulation)
+	if(EepParamsValue[SIMULATION_MODE] == ABILITATO)
 		Display.drawString("DEMO", IconsXPos + 65, TOP_POS);
 	else
 		Display.drawString(FWVers, IconsXPos + 65, TOP_POS);
@@ -440,12 +534,14 @@ static void DrawMeasurePage()
 					MeasurePage--;
 				else
 					MeasurePage = MAX_MEASURE_PAGES - 1;
+				ActualPage = MEASURE_PAGE;
 				break;
 			case B_DOWN:
 				if(MeasurePage < MAX_MEASURE_PAGES - 1)
 					MeasurePage++;
 				else
 					MeasurePage = 0;
+				ActualPage = MEASURE_PAGE;
 				break;
 			case B_LEFT:
 				if(ActualPage < MAX_PAGES - 1)
@@ -510,6 +606,7 @@ static void DrawRelePage()
 			case B_DOWN:
 				ReleStatusSelected = !ReleStatusSelected;
 				Refresh = true;
+				ActualPage = RELE_PAGE;
 				break;
 			case B_LEFT:
 				if(ReleStatusSelected)
@@ -588,13 +685,12 @@ static void RefreshSetupPage(uint8_t SetupItem, bool SetupSelected, bool ChangeP
 	Display.drawString(SetupPageN, CENTER_POS(SetupPageN), 200);
 }
 
-
 static void DrawSetupPage()
 {
 	bool ExitSetupPage = false, SetupSelected = false, ChangeParams = false, Refresh = true;
 	uint8_t SetupItem = 0;
 	uint16_t ParamValue = 0;
-	ParamValue = SetupParams[SetupItem].Value;
+	ParamValue = EepParamsValue[SetupItem];
 	while(!ExitSetupPage)
 	{
 		TaskManagement();
@@ -622,6 +718,7 @@ static void DrawSetupPage()
 				else
 					SetupSelected = !SetupSelected;
 				Refresh = true;
+				ActualPage = SETUP_PAGE;
 				break;
 			case B_DOWN:
 				if(ChangeParams)
@@ -634,6 +731,7 @@ static void DrawSetupPage()
 				else
 					SetupSelected = !SetupSelected;
 				Refresh = true;
+				ActualPage = SETUP_PAGE;
 				break;
 			case B_LEFT:
 				if(SetupSelected)
@@ -642,7 +740,7 @@ static void DrawSetupPage()
 						SetupItem++;
 					else
 						SetupItem = 0;
-					ParamValue = SetupParams[SetupItem].Value;
+					ParamValue = EepParamsValue[SetupItem];
 				}
 				else
 				{
@@ -658,7 +756,11 @@ static void DrawSetupPage()
 				{
 					if(ChangeParams)
 					{
-						SetupParams[SetupItem].Value = ParamValue;
+						if(SetupItem >= CURRENT_HIGH_THR && SetupItem <= PF_LOW_THR)
+						{
+							AssignAlarmsThr(ParamValue, SetupItem);	
+						}
+						EepParamsValue[SetupItem] = ParamValue;
 						SaveParameters();
 					}
 					ChangeParams = !ChangeParams;
@@ -828,6 +930,7 @@ static void DrawAlarmSetupPage()
 			case B_DOWN:
 				AlarmSelected = !AlarmSelected;
 				Refresh = true;
+				ActualPage = ALARM_SETUP_PAGE;
 				break;
 			case B_LEFT:
 				if(AlarmSelected)
@@ -937,6 +1040,7 @@ static void DrawAlarmStatusPage()
 			case B_DOWN:
 				AlarmSelected = !AlarmSelected;
 				Refresh = true;
+				ActualPage = ALARM_STATUS_PAGE;
 				break;
 			case B_LEFT:
 				if(AlarmSelected)
@@ -1007,6 +1111,7 @@ static void DrawResetPage()
 			case B_DOWN:
 				ResetSelected = !ResetSelected;
 				Refresh = true;
+				ActualPage = RESET_PAGE;
 				break;
 			case B_LEFT:
 				if(ResetSelected)
@@ -1047,88 +1152,88 @@ static void DrawResetPage()
 }
 
 
-static void RefreshDemoAct(bool DemoActive, bool ChangeDemoStatus)
-{
-	String DemoStr = "DISABILITATO";
-	Display.setFreeFont(FMB18);
-	if(DemoActive)
-	{
-		Display.setTextColor(TFT_RED);
-		DemoStr = "ABILITATO";
-	}
-	else
-	{
-		Display.setTextColor(TFT_GREEN);
+// static void RefreshDemoAct(bool DemoActive, bool ChangeDemoStatus)
+// {
+	// String DemoStr = "DISABILITATO";
+	// Display.setFreeFont(FMB18);
+	// if(DemoActive)
+	// {
+		// Display.setTextColor(TFT_RED);
+		// DemoStr = "ABILITATO";
+	// }
+	// else
+	// {
+		// Display.setTextColor(TFT_GREEN);
 		
-	}
-	Display.drawString(DemoStr, CENTER_POS(DemoStr), 70);
-	Display.setTextColor(TFT_WHITE);
-	if(ChangeDemoStatus)
-		Display.drawRoundRect( CENTER_POS(DemoStr) - 4,  70 - 4,  Display.textWidth(DemoStr) + 4,  (Display.fontHeight() + 4),  2,  TFT_WHITE);
-}
+	// }
+	// Display.drawString(DemoStr, CENTER_POS(DemoStr), 70);
+	// Display.setTextColor(TFT_WHITE);
+	// if(ChangeDemoStatus)
+		// Display.drawRoundRect( CENTER_POS(DemoStr) - 4,  70 - 4,  Display.textWidth(DemoStr) + 4,  (Display.fontHeight() + 4),  2,  TFT_WHITE);
+// }
 
 
-static void DrawDemoActPage()
-{
-	bool ExitDemoPage = false, ChangeDemoStatus = false, Refresh = true;
-	bool DemoActive = EnableSimulation;
-	while(!ExitDemoPage)
-	{
-		TaskManagement();
-		if(Refresh)
-		{
-			Refresh = false;
-			ClearScreen(true);
-		}
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
-			ClearTopBottomBar();
-		DrawTopInfoBar();
-		DrawPageChange(ActualPage, !ChangeDemoStatus);
-		RefreshDemoAct(DemoActive, ChangeDemoStatus);
-		ButtonPress = CheckButtons();
-		switch(ButtonPress)
-		{
-			case B_UP:
-			case B_DOWN:
-				ChangeDemoStatus = !ChangeDemoStatus;
-				Refresh = true;
-				break;
-			case B_LEFT:
-				if(ChangeDemoStatus)
-					DemoActive = !DemoActive;
-				else
-				{
-					if(ActualPage < MAX_PAGES - 1)
-						ActualPage++;
-					else
-						ActualPage = 0;
-				}
-				Refresh = true;
-				break;
-			case B_OK:
-				if(ChangeDemoStatus)
-				{
-					EnableSimulation = DemoActive;
-					if(DemoActive)
-						DrawPopUp("DEMO ON", 1000);
-					else
-						DrawPopUp("DEMO OFF", 1000);
-				}
-				else
-				{
-					RefreshPage.stop();
-					ClearScreen(true);
-					ExitDemoPage = true;
-				}
-				break;
-			default:
-				break;
-		}
-		delay(LOOPS_DELAY);
-	}
-}
+// static void DrawDemoActPage()
+// {
+	// bool ExitDemoPage = false, ChangeDemoStatus = false, Refresh = true;
+	// bool DemoActive = EnableSimulation;
+	// while(!ExitDemoPage)
+	// {
+		// TaskManagement();
+		// if(Refresh)
+		// {
+			// Refresh = false;
+			// ClearScreen(true);
+		// }
+		// if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			// ClearTopBottomBar();
+		// DrawTopInfoBar();
+		// DrawPageChange(ActualPage, !ChangeDemoStatus);
+		// RefreshDemoAct(DemoActive, ChangeDemoStatus);
+		// ButtonPress = CheckButtons();
+		// switch(ButtonPress)
+		// {
+			// case B_UP:
+			// case B_DOWN:
+				// ChangeDemoStatus = !ChangeDemoStatus;
+				// Refresh = true;
+				// break;
+			// case B_LEFT:
+				// if(ChangeDemoStatus)
+					// DemoActive = !DemoActive;
+				// else
+				// {
+					// if(ActualPage < MAX_PAGES - 1)
+						// ActualPage++;
+					// else
+						// ActualPage = 0;
+				// }
+				// Refresh = true;
+				// break;
+			// case B_OK:
+				// if(ChangeDemoStatus)
+				// {
+					// EnableSimulation = DemoActive;
+					// if(DemoActive)
+						// DrawPopUp("DEMO ON", 1000);
+					// else
+						// DrawPopUp("DEMO OFF", 1000);
+				// }
+				// else
+				// {
+					// RefreshPage.stop();
+					// ClearScreen(true);
+					// ExitDemoPage = true;
+				// }
+				// break;
+			// default:
+				// break;
+		// }
+		// delay(LOOPS_DELAY);
+	// }
+// }
 
-void TaskDisplay()
+void TaskMain()
 {
 	switch(ActualPage)
 	{
@@ -1153,9 +1258,9 @@ void TaskDisplay()
 		case RESET_PAGE:
 			DrawResetPage();
 			break;
-		case DEMO_MODE:
-			DrawDemoActPage();
-			break;
+		// case DEMO_MODE:
+			// DrawDemoActPage();
+			// break;
 		default:
 			break;
 	}

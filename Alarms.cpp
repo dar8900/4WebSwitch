@@ -4,6 +4,7 @@
 #include "Display.h"
 #include "Rele.h"
 #include "Web.h"
+#include "EepromSwitch.h"
 
 Chrono AlarmDelay(Chrono::SECONDS), AlarmReleDisconnectDelay(Chrono::SECONDS);
 
@@ -50,6 +51,52 @@ const char *OverThrAlarmMessage[MAX_ALARM] =
 
 bool AlarmActive, ReleAlreadyDisconnected;
 
+void AssignAlarmsThr(uint16_t Thr, uint8_t WichParam)
+{
+	double AlarmThr = (double)Thr;
+	switch(WichParam)
+	{
+		case CURRENT_HIGH_THR:
+			AlarmThr /= 100;
+			Alarms[CURRENT].HighThr = AlarmThr;
+			break;
+		case CURRENT_LOW_THR:
+			AlarmThr /= 100;
+			Alarms[CURRENT].LowThr = AlarmThr;
+			break;
+		case ACTIVE_POWER_HIGH_THR:
+			AlarmThr *= 100;
+			Alarms[ACTIVE_POWER].HighThr = AlarmThr;
+			break;
+		case REACTIVE_POWER_HIGH_THR:
+			AlarmThr *= 100;
+			Alarms[REACTIVE_POWER].HighThr = AlarmThr;
+			break;
+		case APPARENT_POWER_HIGH_THR:
+			AlarmThr *= 100;
+			Alarms[APPARENT_POWER].HighThr = AlarmThr;
+			break;
+		case PF_HIGH_THR:
+			AlarmThr /= 100;
+			Alarms[PF].HighThr = AlarmThr;
+			break;
+		case PF_LOW_THR:
+			AlarmThr /= 100;
+			Alarms[PF].LowThr = -AlarmThr;
+			break;
+		default:
+			break;
+	}
+}
+
+void AlarmThrInit()
+{
+	for(int i = CURRENT_HIGH_THR; i <= PF_LOW_THR; i++)
+	{
+		AssignAlarmsThr(EepParamsValue[i], i);	
+	}
+}
+
 static void ControlAlarmsThr()
 {
 	int AlarmIndex = 0;
@@ -87,10 +134,9 @@ static void ControlAlarmsThr()
 				}
 				else
 				{
-					if(ActualMeasure <= Alarms[AlarmIndex].LowThr && Alarms[AlarmIndex].WichThr == OVER_THR)
-						Alarms[AlarmIndex].IsActive = false;
-					if(ActualMeasure >= Alarms[AlarmIndex].HighThr && Alarms[AlarmIndex].WichThr == UNDER_THR)
-						Alarms[AlarmIndex].IsActive = false;					
+					if((ActualMeasure <= Alarms[AlarmIndex].LowThr && Alarms[AlarmIndex].WichThr == OVER_THR) ||
+						(ActualMeasure >= Alarms[AlarmIndex].HighThr && Alarms[AlarmIndex].WichThr == UNDER_THR))
+						Alarms[AlarmIndex].IsActive = false;			
 				}
 			}
 		}

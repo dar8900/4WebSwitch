@@ -34,6 +34,21 @@ Chrono  EepromSaveTimer(Chrono::SECONDS);
 
 bool SaveAccomplished;
 
+uint16_t EepParamsValue[MAX_SETUP_ITEMS] = 
+{
+	ABILITATO		   ,		
+	15			       ,
+	60			       ,
+	ABILITATO		   ,
+	I_HIGH_THR_10      ,  
+	I_LOW_THR_1		   ,
+	P_ATT_HIGH_THR_2000,
+	P_REA_HIGH_THR_100 , 
+	P_APP_HIGH_THR_2000,
+	PF_THR_980   	   ,
+	PF_THR_980   	   ,
+};
+
 const uint16_t DfltParamValues[MAX_SETUP_ITEMS]
 {
 	DFLT_WIFI_STATUS,
@@ -108,7 +123,7 @@ void SaveParameters()
 	int EepromAddrInit = SETUP_PARAMS_ADDR;
 	for(int i = 0; i < MAX_SETUP_ITEMS; i++)
 	{
-		EEPROM.put(EepromAddrInit, SetupParams[i].Value);
+		EEPROM.put(EepromAddrInit, EepParamsValue[i]);
 		EepromAddrInit += SETUP_PARAM_VALUE_SIZE;
 	}
 	EEPROM.commit();
@@ -181,7 +196,7 @@ static void LoadParameters()
 	int EepromAddrInit = SETUP_PARAMS_ADDR;
 	for(int i = 0; i < MAX_SETUP_ITEMS; i++)
 	{
-		EEPROM.get(EepromAddrInit, SetupParams[i].Value);
+		EEPROM.get(EepromAddrInit, EepParamsValue[i]);
 		EepromAddrInit += SETUP_PARAM_VALUE_SIZE;
 	}
 }
@@ -219,7 +234,7 @@ void EepromInit()
 
 void TaskEeprom()
 {
-	if(EepromSaveTimer.hasPassed(TIMER_EEPROM_SAVE(SetupParams[EEPROM_SAVE_DELAY].Value), true))
+	if(EepromSaveTimer.hasPassed(TIMER_EEPROM_SAVE(EepParamsValue[EEPROM_SAVE_DELAY]), true))
 	{
 		// SaveEnergies();
 		// SaveMaxMinAvg();

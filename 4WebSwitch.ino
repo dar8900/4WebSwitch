@@ -37,13 +37,14 @@ void setup()
 	WifiInit();
 #endif	
 	ReleInit();
+	AlarmThrInit();
 }
 
 void loop()
 {
 
 #ifdef TASK_DISPLAY
-	TaskDisplay();
+	TaskMain();
 #endif
 
 }

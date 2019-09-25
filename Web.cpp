@@ -11,6 +11,7 @@
 #include <WiFiUdp.h>
 #include <time.h>
 #include <fauxmoESP.h>
+#include "EepromSwitch.h"
 
 #define MY_WIFI_LIST		 3
 #define MAX_WIFI_DEVICE		10
@@ -231,7 +232,7 @@ void WifiInit()
 		}
 	}
 	
-	if(MyDeviceFounded && SetupParams[WIFI_STATUS].Value == ABILITATO)
+	if(MyDeviceFounded && EepParamsValue[WIFI_STATUS] == ABILITATO)
 	{
 		bool ConnectionDone = true;
 		WiFi.begin(MyNetworksList[MyDeviceList].SSID, MyNetworksList[MyDeviceList].Passwd);
@@ -240,7 +241,7 @@ void WifiInit()
 		{
 			delay(50);
 			Serial.print(".");
-			ConnectionTimeOut.hasPassed(30, true)
+			if(ConnectionTimeOut.hasPassed(30, true))
 			{
 				ConnectionDone = false;
 				break;
@@ -260,6 +261,7 @@ void WifiInit()
 #ifdef ALEXA			
 				AlexaInit();
 #endif			
+			}
 			String IP_popup = IPAddr();
 			DrawWiFiConnPage(String(MyNetworksList[MyDeviceList].SSID), IP_popup);
 		}

@@ -7,7 +7,7 @@
 #define DFLT_AVG_MEASURE_PERIOD	     60
 
 extern bool SaveAccomplished;
-
+extern uint16_t EepParamsValue[];
 
 void EepromInit(void);
 

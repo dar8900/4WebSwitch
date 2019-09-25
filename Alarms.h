@@ -39,6 +39,9 @@ extern const char *AlarmsName[MAX_ALARM];
 extern const char *UnderThrAlarmMessage[MAX_ALARM];
 extern const char *OverThrAlarmMessage[MAX_ALARM];
 
+void AssignAlarmsThr(uint16_t Thr, uint8_t WichParam);
+void AlarmThrInit(void);
+
 void ResetAlarms(void);
 void TaskAlarm(void);
 
