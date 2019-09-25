@@ -16,14 +16,23 @@
 #define SETUP_PARAM_VALUE_SIZE		     2
 
 #define FIRST_CHECK_VAR_ADDR		     0
-#define ENERGIES_START_ADDR			     1
-#define MAX_MIN_AVG_START_ADDR    	    51
 
+#define ENERGIES_CHECK_ADDR			     1
+#define ENERGIES_START_ADDR			     2
+
+#define MAX_MIN_AVG_CHECK_ADDR 			51
+#define MAX_MIN_AVG_START_ADDR    	    52
+
+#define RELE_STATUS_CHECK_ADDR         199
 #define RELE_STATUS_START_ADDR    	   200
-#define RELE_STAT_START_ADDR 		   204
 
+#define RELE_STAT_CHECK_ADD			   204
+#define RELE_STAT_START_ADDR 		   205
+
+#define ALARMS_OCCUR_CHECK_ADDR		   249
 #define ALARMS_OCCUR_START_ADDR		   250
 
+#define SETUP_PARAMS_CHECK_ADDR		   299
 #define SETUP_PARAMS_ADDR			   300
 
 #define TIMER_EEPROM_SAVE(Min)         (Min * 60)
@@ -132,18 +141,41 @@ void SaveParameters()
 static void LoadEnergies()
 {
 	int EepromAddrInit = ENERGIES_START_ADDR;
+	if(EEPROM.read(ENERGIES_CHECK_ADDR) != 1)
+	{
+		EEPROM.write(ENERGIES_CHECK_ADDR, 1);
+		EEPROM.set(ENERGIES_START_ADDR, Measures.Energies);
+		EEPROM.commit();
+	}
 	EEPROM.get(ENERGIES_START_ADDR, Measures.Energies);
 }
 
 static void LoadMaxMinAvg()
 {
 	int EepromAddrInit = MAX_MIN_AVG_START_ADDR;
+	if(EEPROM.read(MAX_MIN_AVG_CHECK_ADDR) != 1)
+	{
+		EEPROM.write(MAX_MIN_AVG_CHECK_ADDR, 1);
+		EEPROM.set(MAX_MIN_AVG_START_ADDR, Measures.MaxMinAvg);
+		EEPROM.commit();
+	}
 	EEPROM.get(MAX_MIN_AVG_START_ADDR, Measures.MaxMinAvg);
 }
 
 static void LoadReleSatus()
 {
 	int EepromAddrInit = RELE_STATUS_START_ADDR;
+	if(EEPROM.read(RELE_STATUS_CHECK_ADDR) != 1)
+	{
+		EEPROM.write(RELE_STATUS_CHECK_ADDR, 1);
+		for(int i = 0; i < N_RELE; i++)
+		{
+			EEPROM.set(EepromAddrInit, STATUS_OFF);
+			EepromAddrInit += RELE_STATUS_SIZE;		
+			delay(1);
+		}	
+		EEPROM.commit();
+	}	
 	for(int i = 0; i < N_RELE; i++)
 	{
 		uint8_t Status = 0;
@@ -158,6 +190,26 @@ static void LoadReleSatus()
 static void LoadReleStatistics()
 {
 	int EepromAddrInit = RELE_STAT_START_ADDR;
+	if(EEPROM.read(RELE_STAT_CHECK_ADD) != 1)
+	{
+		EEPROM.write(RELE_STAT_CHECK_ADD, 1);
+		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_1].NSwitches);
+		EepromAddrInit += RELE_OCCUR_SIZE;
+		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_2].NSwitches);
+		EepromAddrInit += RELE_OCCUR_SIZE;
+		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_3].NSwitches);
+		EepromAddrInit += RELE_OCCUR_SIZE;
+		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_4].NSwitches);	
+		EepromAddrInit += RELE_OCCUR_SIZE;
+		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_1].PowerOnTime);
+		EepromAddrInit += RELE_POWERON_SIZE;
+		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_2].PowerOnTime);
+		EepromAddrInit += RELE_POWERON_SIZE;
+		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_3].PowerOnTime);
+		EepromAddrInit += RELE_POWERON_SIZE;
+		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_4].PowerOnTime);	
+		EEPROM.commit();
+	}
 	EEPROM.get(EepromAddrInit, ReleStatistics[RELE_1].NSwitches);
 	EepromAddrInit += RELE_OCCUR_SIZE;
 	EEPROM.get(EepromAddrInit, ReleStatistics[RELE_2].NSwitches);
@@ -178,6 +230,22 @@ static void LoadReleStatistics()
 static void LoadAlarmsOccurence()
 {
 	int EepromAddrInit = ALARMS_OCCUR_START_ADDR;
+	if(EEPROM.read(ALARMS_OCCUR_CHECK_ADDR) != 1)
+	{
+		EEPROM.write(ALARMS_OCCUR_CHECK_ADDR, 1)
+		EEPROM.set(EepromAddrInit, Alarms[CURRENT].Occurences);
+		EepromAddrInit += ALARMS_OCCUR_SIZE;	
+		EEPROM.set(EepromAddrInit, Alarms[VOLTAGE].Occurences);
+		EepromAddrInit += ALARMS_OCCUR_SIZE;
+		EEPROM.set(EepromAddrInit, Alarms[ACTIVE_POWER].Occurences);
+		EepromAddrInit += ALARMS_OCCUR_SIZE;
+		EEPROM.set(EepromAddrInit, Alarms[REACTIVE_POWER].Occurences);
+		EepromAddrInit += ALARMS_OCCUR_SIZE;
+		EEPROM.set(EepromAddrInit, Alarms[APPARENT_POWER].Occurences);
+		EepromAddrInit += ALARMS_OCCUR_SIZE;
+		EEPROM.set(EepromAddrInit, Alarms[PF].Occurences);		
+		EEPROM.commit();
+	}
 	EEPROM.get(EepromAddrInit, Alarms[CURRENT].Occurences);
 	EepromAddrInit += ALARMS_OCCUR_SIZE;	
 	EEPROM.get(EepromAddrInit, Alarms[VOLTAGE].Occurences);
