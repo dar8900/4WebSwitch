@@ -37,6 +37,22 @@
 
 #define TIMER_EEPROM_SAVE(Min)         (Min * 60)
 
+#define DFLT_WIFI_STATUS	         ABILITATO
+#define DFLT_SAVE_DELAY	  			 15
+#define DFLT_AVG_MEASURE_PERIOD	     60
+#define DFLT_SIM					 DISABILITATO		   
+#define DFLT_I_HIGH_THR              I_HIGH_THR_10
+#define DFLT_I_LOW_THR		         I_LOW_THR_0_1
+#define DFLT_P_ATT_HIGH_THR  	     P_ATT_HIGH_THR_2000
+#define DFLT_P_REA_HIGH_THR   		 P_REA_HIGH_THR_100
+#define DFLT_P_APP_HIGH_THR  		 P_APP_HIGH_THR_2000
+#define DFLT_PF_THR  	   			 PF_THR_980
+  	   
+
+
+
+
+
 
 
 Chrono  EepromSaveTimer(Chrono::SECONDS);
@@ -63,6 +79,13 @@ const uint16_t DfltParamValues[MAX_SETUP_ITEMS]
 	DFLT_WIFI_STATUS,
 	DFLT_SAVE_DELAY	,
 	DFLT_AVG_MEASURE_PERIOD,
+	DFLT_SIM,			
+	DFLT_I_HIGH_THR,     
+	DFLT_I_LOW_THR,		
+	DFLT_P_ATT_HIGH_THR, 
+	DFLT_P_REA_HIGH_THR, 
+	DFLT_P_APP_HIGH_THR, 
+	DFLT_PF_THR,	
 };
 
 
@@ -144,7 +167,7 @@ static void LoadEnergies()
 	if(EEPROM.read(ENERGIES_CHECK_ADDR) != 1)
 	{
 		EEPROM.write(ENERGIES_CHECK_ADDR, 1);
-		EEPROM.set(ENERGIES_START_ADDR, Measures.Energies);
+		EEPROM.put(ENERGIES_START_ADDR, Measures.Energies);
 		EEPROM.commit();
 	}
 	EEPROM.get(ENERGIES_START_ADDR, Measures.Energies);
@@ -156,7 +179,7 @@ static void LoadMaxMinAvg()
 	if(EEPROM.read(MAX_MIN_AVG_CHECK_ADDR) != 1)
 	{
 		EEPROM.write(MAX_MIN_AVG_CHECK_ADDR, 1);
-		EEPROM.set(MAX_MIN_AVG_START_ADDR, Measures.MaxMinAvg);
+		EEPROM.put(MAX_MIN_AVG_START_ADDR, Measures.MaxMinAvg);
 		EEPROM.commit();
 	}
 	EEPROM.get(MAX_MIN_AVG_START_ADDR, Measures.MaxMinAvg);
@@ -170,7 +193,7 @@ static void LoadReleSatus()
 		EEPROM.write(RELE_STATUS_CHECK_ADDR, 1);
 		for(int i = 0; i < N_RELE; i++)
 		{
-			EEPROM.set(EepromAddrInit, STATUS_OFF);
+			EEPROM.put(EepromAddrInit, STATUS_OFF);
 			EepromAddrInit += RELE_STATUS_SIZE;		
 			delay(1);
 		}	
@@ -193,21 +216,21 @@ static void LoadReleStatistics()
 	if(EEPROM.read(RELE_STAT_CHECK_ADD) != 1)
 	{
 		EEPROM.write(RELE_STAT_CHECK_ADD, 1);
-		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_1].NSwitches);
+		EEPROM.put(EepromAddrInit, ReleStatistics[RELE_1].NSwitches);
 		EepromAddrInit += RELE_OCCUR_SIZE;
-		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_2].NSwitches);
+		EEPROM.put(EepromAddrInit, ReleStatistics[RELE_2].NSwitches);
 		EepromAddrInit += RELE_OCCUR_SIZE;
-		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_3].NSwitches);
+		EEPROM.put(EepromAddrInit, ReleStatistics[RELE_3].NSwitches);
 		EepromAddrInit += RELE_OCCUR_SIZE;
-		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_4].NSwitches);	
+		EEPROM.put(EepromAddrInit, ReleStatistics[RELE_4].NSwitches);	
 		EepromAddrInit += RELE_OCCUR_SIZE;
-		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_1].PowerOnTime);
+		EEPROM.put(EepromAddrInit, ReleStatistics[RELE_1].PowerOnTime);
 		EepromAddrInit += RELE_POWERON_SIZE;
-		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_2].PowerOnTime);
+		EEPROM.put(EepromAddrInit, ReleStatistics[RELE_2].PowerOnTime);
 		EepromAddrInit += RELE_POWERON_SIZE;
-		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_3].PowerOnTime);
+		EEPROM.put(EepromAddrInit, ReleStatistics[RELE_3].PowerOnTime);
 		EepromAddrInit += RELE_POWERON_SIZE;
-		EEPROM.set(EepromAddrInit, ReleStatistics[RELE_4].PowerOnTime);	
+		EEPROM.put(EepromAddrInit, ReleStatistics[RELE_4].PowerOnTime);	
 		EEPROM.commit();
 	}
 	EEPROM.get(EepromAddrInit, ReleStatistics[RELE_1].NSwitches);
@@ -232,18 +255,18 @@ static void LoadAlarmsOccurence()
 	int EepromAddrInit = ALARMS_OCCUR_START_ADDR;
 	if(EEPROM.read(ALARMS_OCCUR_CHECK_ADDR) != 1)
 	{
-		EEPROM.write(ALARMS_OCCUR_CHECK_ADDR, 1)
-		EEPROM.set(EepromAddrInit, Alarms[CURRENT].Occurences);
+		EEPROM.write(ALARMS_OCCUR_CHECK_ADDR, 1);
+		EEPROM.put(EepromAddrInit, Alarms[CURRENT].Occurences);
 		EepromAddrInit += ALARMS_OCCUR_SIZE;	
-		EEPROM.set(EepromAddrInit, Alarms[VOLTAGE].Occurences);
+		EEPROM.put(EepromAddrInit, Alarms[VOLTAGE].Occurences);
 		EepromAddrInit += ALARMS_OCCUR_SIZE;
-		EEPROM.set(EepromAddrInit, Alarms[ACTIVE_POWER].Occurences);
+		EEPROM.put(EepromAddrInit, Alarms[ACTIVE_POWER].Occurences);
 		EepromAddrInit += ALARMS_OCCUR_SIZE;
-		EEPROM.set(EepromAddrInit, Alarms[REACTIVE_POWER].Occurences);
+		EEPROM.put(EepromAddrInit, Alarms[REACTIVE_POWER].Occurences);
 		EepromAddrInit += ALARMS_OCCUR_SIZE;
-		EEPROM.set(EepromAddrInit, Alarms[APPARENT_POWER].Occurences);
+		EEPROM.put(EepromAddrInit, Alarms[APPARENT_POWER].Occurences);
 		EepromAddrInit += ALARMS_OCCUR_SIZE;
-		EEPROM.set(EepromAddrInit, Alarms[PF].Occurences);		
+		EEPROM.put(EepromAddrInit, Alarms[PF].Occurences);		
 		EEPROM.commit();
 	}
 	EEPROM.get(EepromAddrInit, Alarms[CURRENT].Occurences);
@@ -262,6 +285,16 @@ static void LoadAlarmsOccurence()
 static void LoadParameters()
 {
 	int EepromAddrInit = SETUP_PARAMS_ADDR;
+	if(EEPROM.read(SETUP_PARAMS_CHECK_ADDR) != MAX_SETUP_ITEMS)
+	{
+		for(int i = 0; i < MAX_SETUP_ITEMS; i++)
+		{
+			EEPROM.put(EepromAddrInit, DfltParamValues[i]);
+			EepromAddrInit += SETUP_PARAM_VALUE_SIZE;
+		}	
+		EEPROM.write(SETUP_PARAMS_CHECK_ADDR, MAX_SETUP_ITEMS);	
+		EEPROM.commit();
+	}
 	for(int i = 0; i < MAX_SETUP_ITEMS; i++)
 	{
 		EEPROM.get(EepromAddrInit, EepParamsValue[i]);

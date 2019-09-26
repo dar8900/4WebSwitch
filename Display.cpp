@@ -445,7 +445,10 @@ static uint8_t SearchRange(double Value)
 				break;
 			}
 			else
+			{
+				i = 3;
 				break;
+			}
 		}
 	}
 	return i;
@@ -1005,8 +1008,20 @@ static void RefreshAlarmStatus(uint8_t AlarmItem, bool AlarmStatusSelected)
 	}
 	else
 	{
+		String AlarmsThrStr = "";
 		Display.setTextColor(TFT_GREEN);
 		Display.drawString("NON ATTIVO", CENTER_POS("NON ATTIVO"), Display.fontHeight() + 30);
+		Display.setTextColor(TFT_WHITE);
+		Display.setFreeFont(FM9);
+		Display.drawString("Soglia sup.", CENTER_POS("Soglia sup."), Display.fontHeight() + 40);
+		Display.setFreeFont(FMB9);
+		AlarmsThrStr = String(Alarms[AlarmItem].HighThr, 1);
+		Display.drawString(AlarmsThrStr, CENTER_POS(AlarmsThrStr), Display.fontHeight() + 50);
+		Display.setFreeFont(FM9);
+		Display.drawString("Soglia inf.", CENTER_POS("Soglia inf."), Display.fontHeight() + 60);
+		Display.setFreeFont(FMB9);
+		AlarmsThrStr = String(Alarms[AlarmItem].LowThr, 1);
+		Display.drawString(AlarmsThrStr, CENTER_POS(AlarmsThrStr), Display.fontHeight() + 70);
 	}
 	Display.setTextColor(TFT_WHITE);
 	Display.setFreeFont(FM9);
