@@ -410,6 +410,8 @@ static void DrawMainScreen()
 			ClearTopBottomBar();
 		DrawTopInfoBar();
 		DrawPageChange(ActualPage, true);
+		Display.setFreeFont(FMB18);
+		Display.drawString("4 WEB SWITCH", CENTER_POS("4 WEB SWITCH"), 25);
 		DrawReleStatus();
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
@@ -785,6 +787,11 @@ static void DrawSetupPage()
 						}
 						EepParamsValue[SetupItem] = ParamValue;
 						SaveParameters();
+						if(SetupItem == WIFI_STATUS)
+						{
+							DrawPopUp("Riavvio...", 2000);
+							ResetMcu();
+						}
 					}
 					ChangeParams = !ChangeParams;
 					Refresh = true;

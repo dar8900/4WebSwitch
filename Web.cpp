@@ -425,6 +425,7 @@ void TaskWeb()
 			GetTime();
 		}
 		WifiSignal = GetWifiSignalPower();
+		CheckWifiCon();
 	}
 	else
 	{
@@ -432,6 +433,7 @@ void TaskWeb()
 		TimeFormatted = "--:--";
 		DateFormatted = "--/--/--";
 		TimeInSecond = 0;
+		WifiSignal = NO_SIGNAL;
 	}
 }
 
