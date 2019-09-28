@@ -72,11 +72,11 @@ const MEASURE_PAGE_LABEL_DES MeasureUdmLabel[MAX_MEASURE_PAGES] PROGMEM =
 	{"Energie tot."    , "Wh", "VArh", "VAh", "E.att"    , "E.rea"    , "E.app"     },
 	{"Energie parz."   , "Wh", "VArh", "VAh", "EP Att"   , "EP Rea"   , "EP App"    },
 	{"Massimi I, V, PF", "A" , "V"   , " "  , "Max I"    , "Max V"    , "Max PF"    },
-	{"Massimi potenze" , "W" , "VAr" , "VA" , "Max P Att", "Max P Rea", "Max P App" },
+	{"Massimi potenze" , "W" , "VAr" , "VA" , "Max PAtt" , "Max PRea" , "Max PApp"  },
 	{"Minimi I, V, PF" , "A" , "V"   , " "  , "Min I"    , "Min V"    , "Min PF"    },
-	{"Minimi potenze"  , "W" , "VAr" , "VA" , "Min P Att", "Min P Rea", "Min P App" },
+	{"Minimi potenze"  , "W" , "VAr" , "VA" , "Min PAtt" , "Min PRea" , "Min PApp"  },
 	{"Medie I, V, PF"  , "A" , "V"   , " "  , "Avg I"    , "Avg V"    , "Avg PF"    },
-	{"Medie potenze"   , "W" , "VAr" , "VA" , "Avg P Att", "Avg P Rea", "Avg P App" },
+	{"Medie potenze"   , "W" , "VAr" , "VA" , "Avg PAtt" , "Avg PRea" , "Avg PApp"  },
 
 };
 
@@ -530,7 +530,7 @@ static void DrawMeasurePage()
 	while(!ExitMeasurePage)
 	{
 		TaskManagement();
-		if(RefreshPage.hasPassed(3000, true))
+		if(RefreshPage.hasPassed(1500, true))
 			ClearScreen(true);
 		DrawTopInfoBar();
 		DrawPageChange(ActualPage, true);
