@@ -6,6 +6,8 @@
 #include "Web.h"
 #include "EepromSwitch.h"
 
+
+
 Chrono AlarmDelay(Chrono::SECONDS), AlarmReleDisconnectDelay(Chrono::SECONDS);
 
 ALARM_S Alarms[MAX_ALARM] = 
@@ -69,7 +71,7 @@ void AssignAlarmsThr(uint16_t Thr, uint8_t WichParam)
 			Alarms[ACTIVE_POWER].HighThr = AlarmThr;
 			break;
 		case REACTIVE_POWER_HIGH_THR:
-			AlarmThr *= 100;
+			AlarmThr *= 10;
 			Alarms[REACTIVE_POWER].HighThr = AlarmThr;
 			break;
 		case APPARENT_POWER_HIGH_THR:
@@ -93,7 +95,7 @@ void AlarmThrInit()
 {
 	for(int i = CURRENT_HIGH_THR; i <= PF_LOW_THR; i++)
 	{
-		AssignAlarmsThr(EepParamsValue[i], i);	
+		AssignAlarmsThr(SetupParams[i].EnumList[EepParamsValue[i]].EnumValue, i);	
 	}
 }
 

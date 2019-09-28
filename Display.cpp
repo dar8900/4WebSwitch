@@ -192,19 +192,19 @@ const ENUM_VALUE PFHighThrEnum[MAX_PF_THR] =
 	{"0.990"  , PF_THR_990},
 };
 
-static const SETUP_PARAMS SetupParams[MAX_SETUP_ITEMS] = 
+const SETUP_PARAMS SetupParams[MAX_SETUP_ITEMS] = 
 {
-	{"Stato WiFi"		          , ABILITATO			 , DISABILITATO         , ENUME_TYPE , WifiEnum       ,  NULL  },
-	{"Delay salvataggio"          ,        60			 ,            1         , VALUE_TYPE , NULL           , "min"  },
-	{"Periodo media misure"       ,      3600			 ,            5         , VALUE_TYPE , NULL           ,   "s"  },
-	{"Simulazione"      		  , ABILITATO			 , DISABILITATO         , ENUME_TYPE , DemoEnum       ,  NULL  },
-	{"Sovra soglia corrente"      , I_HIGH_THR_16		 , I_HIGH_THR_5         , ENUME_TYPE , CurrHighThrEnum,  "A"   },
-	{"Sotto soglia corrente"      , I_LOW_THR_1_5		 , I_LOW_THR_0_0_5      , ENUME_TYPE , CurrLowThrEnum ,  "A"   },
-	{"Sovra soglia p. attiva"     , P_ATT_HIGH_THR_3400  , P_ATT_HIGH_THR_1000	, ENUME_TYPE , PAttHighThrEnum,  "kW"  },
-	{"Sovra soglia p. reattiva"   , P_REA_HIGH_THR_1000  , P_REA_HIGH_THR_50	, ENUME_TYPE , PReaHighThrEnum,  "kVAr"},
-	{"Sovra soglia p. apparente"  , P_APP_HIGH_THR_3400  , P_APP_HIGH_THR_1000	, ENUME_TYPE , PAppHighThrEnum,  "kVA" },
-	{"Sovra soglia PF"            , PF_THR_990			 , PF_THR_500 		    , ENUME_TYPE , PFHighThrEnum  ,  NULL  },
-	{"Sotto soglia PF"            , PF_THR_990			 , PF_THR_500 		    , ENUME_TYPE , PFLowThrEnum   ,  NULL  },	
+	{"Stato WiFi"		          , ABILITATO			 	 , DISABILITATO         , ENUM_TYPE  , WifiEnum       ,  NULL  },
+	{"Delay salvataggio"          ,        60			 	 ,            1         , VALUE_TYPE , NULL           , "min"  },
+	{"Periodo media misure"       ,      3600			 	 ,            5         , VALUE_TYPE , NULL           ,   "s"  },
+	{"Simulazione"      		  , ABILITATO			 	 , DISABILITATO         , ENUM_TYPE  , DemoEnum       ,  NULL  },
+	{"Soglia sovra corrente"      , MAX_I_HIGH_THR - 1	 	 , 0                    , ENUM_TYPE  , CurrHighThrEnum,  "A"   },
+	{"Soglia sotto corrente"      , MAX_I_LOW_THR - 1	 	 , 0                    , ENUM_TYPE  , CurrLowThrEnum ,  "A"   },
+	{"Soglia sovra p. attiva"     , MAX_P_ATT_HIGH_THR - 1   , 0                  	, ENUM_TYPE  , PAttHighThrEnum,  "kW"  },
+	{"Soglia sovra p. reattiva"   , MAX_P_REA_HIGH_THR - 1   , 0                    , ENUM_TYPE  , PReaHighThrEnum,  "kVAr"},
+	{"Soglia sovra p. apparente"  , MAX_A_APP_HIGH_THR - 1   , 0                   	, ENUM_TYPE  , PAppHighThrEnum,  "kVA" },
+	{"Soglia sovra PF"            , MAX_PF_THR - 1		     , 0                    , ENUM_TYPE  , PFHighThrEnum  ,  NULL  },
+	{"Soglia sotto PF"            , MAX_PF_THR - 1		     , 0		    	    , ENUM_TYPE  , PFLowThrEnum   ,  NULL  },	
 };
 
 
@@ -342,8 +342,12 @@ static void DrawTopInfoBar()
 	if(SaveAccomplished)
 	{
 		Display.drawXBitmap(148, 0, SaveIcon_bits, 12, 12, TFT_YELLOW);	
-		if(SaveIconTimer.hasPassed(4000, true))
+		if(SaveIconTimer.hasPassed(2500, true))
 			SaveAccomplished = false;
+	}
+	else
+	{
+		SaveIconTimer.restart();
 	}
 	IconsXPos = IconsXPos + 46;
 	for(int i = 0; i < N_RELE; i++)
@@ -648,13 +652,26 @@ static void DrawRelePage()
 	}
 }
 
+static int SearchEnumIndex(uint8_t SetupItem, uint16_t ParamValue)
+{
+	int EnumIndex = 0;
+	for(EnumIndex = 0; EnumIndex <= SetupParams[SetupItem].MaxVal; EnumIndex++)
+	{
+		if(SetupParams[SetupItem].EnumList[EnumIndex].EnumValue == ParamValue)
+			return EnumIndex;
+		
+	}
+	return 0;
+}
+
+
 static void RefreshSetupPage(uint8_t SetupItem, bool SetupSelected, bool ChangeParams, uint16_t ParamValue)
 {
 	String ParamValueStr = "";
 	Display.setFreeFont(FMB9);
 	Display.drawString(SetupParams[SetupItem].ParamTitle, CENTER_POS(SetupParams[SetupItem].ParamTitle), 50);
-	Display.setFreeFont(FMB18);
-	if(SetupParams[SetupItem].Type == ENUME_TYPE)
+	Display.setFreeFont(FMB12);
+	if(SetupParams[SetupItem].Type == ENUM_TYPE)
 	{
 		Display.setTextColor(TFT_GREENYELLOW);
 		ParamValueStr = String(SetupParams[SetupItem].EnumList[ParamValue].EnumTitle);
@@ -693,7 +710,10 @@ static void DrawSetupPage()
 	bool ExitSetupPage = false, SetupSelected = false, ChangeParams = false, Refresh = true;
 	uint8_t SetupItem = 0;
 	uint16_t ParamValue = 0;
+	// if(SetupParams[SetupItem].Type != ENUM_TYPE)
 	ParamValue = EepParamsValue[SetupItem];
+	// else
+		// ParamValue = SearchEnumIndex(SetupItem, EepParamsValue[SetupItem]);
 	while(!ExitSetupPage)
 	{
 		TaskManagement();
@@ -761,7 +781,7 @@ static void DrawSetupPage()
 					{
 						if(SetupItem >= CURRENT_HIGH_THR && SetupItem <= PF_LOW_THR)
 						{
-							AssignAlarmsThr(ParamValue, SetupItem);	
+							AssignAlarmsThr(SetupParams[SetupItem].EnumList[ParamValue].EnumValue, SetupItem);	
 						}
 						EepParamsValue[SetupItem] = ParamValue;
 						SaveParameters();
@@ -977,6 +997,8 @@ static void DrawAlarmSetupPage()
 static void RefreshAlarmStatus(uint8_t AlarmItem, bool AlarmStatusSelected)
 {
 	Display.setFreeFont(FMB9);
+	if(AlarmStatusSelected)
+			Display.drawRoundRect(30,  16, 260,  180,  2,  TFT_WHITE);
 	Display.drawString(AlarmsName[AlarmItem], CENTER_POS(AlarmsName[AlarmItem]), 20);
 	if(Alarms[AlarmItem].IsActive)
 	{
@@ -1013,15 +1035,15 @@ static void RefreshAlarmStatus(uint8_t AlarmItem, bool AlarmStatusSelected)
 		Display.drawString("NON ATTIVO", CENTER_POS("NON ATTIVO"), Display.fontHeight() + 30);
 		Display.setTextColor(TFT_WHITE);
 		Display.setFreeFont(FM9);
-		Display.drawString("Soglia sup.", CENTER_POS("Soglia sup."), Display.fontHeight() + 40);
+		Display.drawString("Soglia sup.", CENTER_POS("Soglia sup."), Display.fontHeight() + 80);
 		Display.setFreeFont(FMB9);
-		AlarmsThrStr = String(Alarms[AlarmItem].HighThr, 1);
-		Display.drawString(AlarmsThrStr, CENTER_POS(AlarmsThrStr), Display.fontHeight() + 50);
+		AlarmsThrStr = String(Alarms[AlarmItem].HighThr, 3);
+		Display.drawString(AlarmsThrStr, CENTER_POS(AlarmsThrStr), Display.fontHeight() + 95);
 		Display.setFreeFont(FM9);
-		Display.drawString("Soglia inf.", CENTER_POS("Soglia inf."), Display.fontHeight() + 60);
+		Display.drawString("Soglia inf.", CENTER_POS("Soglia inf."), Display.fontHeight() + 140);
 		Display.setFreeFont(FMB9);
-		AlarmsThrStr = String(Alarms[AlarmItem].LowThr, 1);
-		Display.drawString(AlarmsThrStr, CENTER_POS(AlarmsThrStr), Display.fontHeight() + 70);
+		AlarmsThrStr = String(Alarms[AlarmItem].LowThr, 3);
+		Display.drawString(AlarmsThrStr, CENTER_POS(AlarmsThrStr), Display.fontHeight() + 155);
 	}
 	Display.setTextColor(TFT_WHITE);
 	Display.setFreeFont(FM9);

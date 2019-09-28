@@ -1,6 +1,7 @@
 #include "4WebSwitch.h"
 #include "Rele.h"
 #include <ShiftyReg.h>
+#include "EepromSwitch.h"
 
 #define N_OF_SHIFT_REG	1
 
@@ -19,6 +20,12 @@ void ReleInit()
 
 	TurnAllRele(STATUS_OFF);
 	ShiftReg.loadAllExit(STATUS_OFF);
+	
+	for(int ReleIndex = 0; ReleIndex < N_RELE; ReleIndex++)
+	{
+		SwichReleStatus(ReleIndex, ReleInitStatus[ReleIndex]);
+		delay(50);
+	}
 #ifdef TEST_RELE_EXIT	
 	for(int ReleIndex = 0; ReleIndex < N_RELE * 2; ReleIndex++)
 	{

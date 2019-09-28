@@ -6,6 +6,7 @@
 
 extern bool SaveAccomplished;
 extern uint16_t EepParamsValue[];
+extern uint8_t ReleInitStatus[];
 
 void EepromInit(void);
 

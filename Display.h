@@ -100,7 +100,7 @@ typedef enum
 
 typedef enum
 {
-	ENUME_TYPE = 0,
+	ENUM_TYPE = 0,
 	VALUE_TYPE
 }PARAMETER_TYPE;
 
@@ -137,7 +137,7 @@ enum
 	P_ATT_HIGH_THR_2800 = 28,
 	P_ATT_HIGH_THR_3000 = 30,
 	P_ATT_HIGH_THR_3400 = 34,
-	MAX_P_ATT_HIGH_THR	= 9
+	MAX_P_ATT_HIGH_THR	= 8
 };
 
 
@@ -150,7 +150,7 @@ enum
 	P_REA_HIGH_THR_500  =  50,
 	P_REA_HIGH_THR_800  =  80,
 	P_REA_HIGH_THR_1000 = 100,
-	MAX_P_REA_HIGH_THR	= 7
+	MAX_P_REA_HIGH_THR	= 6
 };
 
 
@@ -165,7 +165,7 @@ enum
 	P_APP_HIGH_THR_2800 = 28,
 	P_APP_HIGH_THR_3000 = 30,
 	P_APP_HIGH_THR_3400 = 34,
-	MAX_A_APP_HIGH_THR	= 9
+	MAX_A_APP_HIGH_THR	= 8
 };
 
 enum
@@ -179,7 +179,7 @@ enum
 	PF_THR_950 =  95,
 	PF_THR_980 =  98,	
 	PF_THR_990 =  99,	
-	MAX_PF_THR =  10
+	MAX_PF_THR =  9
 };
 
 
@@ -212,7 +212,7 @@ typedef enum
 	MAX_RESET_ITEMS
 }RESET_ITEMS;
 
-
+extern const SETUP_PARAMS SetupParams[];
 
 void DisplayInit(void);
 void DrawWelcomePage(void);

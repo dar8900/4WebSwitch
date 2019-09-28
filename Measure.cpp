@@ -400,7 +400,7 @@ void ResetAvg()
 
 void TaskMeasure()
 {
-	if(EepParamsValue[SIMULATION_MODE] == ABILITATO)
+	if(EepParamsValue[SIMULATION_MODE] == DISABILITATO)
 		CalcMeasure();
 	else
 		CalcSimCurrentVoltage(false);

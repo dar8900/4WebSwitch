@@ -41,12 +41,12 @@
 #define DFLT_SAVE_DELAY	  			 15
 #define DFLT_AVG_MEASURE_PERIOD	     60
 #define DFLT_SIM					 DISABILITATO		   
-#define DFLT_I_HIGH_THR              I_HIGH_THR_10
-#define DFLT_I_LOW_THR		         I_LOW_THR_0_1
-#define DFLT_P_ATT_HIGH_THR  	     P_ATT_HIGH_THR_2000
-#define DFLT_P_REA_HIGH_THR   		 P_REA_HIGH_THR_100
-#define DFLT_P_APP_HIGH_THR  		 P_APP_HIGH_THR_2000
-#define DFLT_PF_THR  	   			 PF_THR_980
+#define DFLT_I_HIGH_THR              2
+#define DFLT_I_LOW_THR		         2
+#define DFLT_P_ATT_HIGH_THR  	     2
+#define DFLT_P_REA_HIGH_THR   		 2
+#define DFLT_P_APP_HIGH_THR  		 2
+#define DFLT_PF_THR  	   			 2
   	   
 
 
@@ -61,18 +61,20 @@ bool SaveAccomplished;
 
 uint16_t EepParamsValue[MAX_SETUP_ITEMS] = 
 {
-	ABILITATO		   ,		
-	15			       ,
-	60			       ,
-	ABILITATO		   ,
-	I_HIGH_THR_10      ,  
-	I_LOW_THR_1		   ,
-	P_ATT_HIGH_THR_2000,
-	P_REA_HIGH_THR_100 , 
-	P_APP_HIGH_THR_2000,
-	PF_THR_980   	   ,
-	PF_THR_980   	   ,
+	ABILITATO		    ,		
+	15			        ,
+	60			        ,
+	ABILITATO		    ,
+	DFLT_I_HIGH_THR     ,  
+	DFLT_I_LOW_THR		,
+	DFLT_P_ATT_HIGH_THR ,
+	DFLT_P_REA_HIGH_THR , 
+	DFLT_P_APP_HIGH_THR ,
+	DFLT_PF_THR  	   	,
+	DFLT_PF_THR         ,
 };
+
+uint8_t ReleInitStatus[N_RELE];
 
 const uint16_t DfltParamValues[MAX_SETUP_ITEMS]
 {
@@ -203,7 +205,8 @@ static void LoadReleSatus()
 	{
 		uint8_t Status = 0;
 		EEPROM.get(EepromAddrInit, Status);
-		SwichReleStatus(i, Status);
+		ReleInitStatus[i] = Status;
+		// SwichReleStatus(i, Status);
 		EepromAddrInit += RELE_STATUS_SIZE;		
 		delay(1);
 	}	
@@ -327,8 +330,8 @@ void EepromInit()
 		// LoadEnergies();
 		// LoadMaxMinAvg();
 		LoadReleSatus();
-		// LoadReleStatistics();
-		// LoadAlarmsOccurence();
+		LoadReleStatistics();
+		LoadAlarmsOccurence();
 		LoadParameters();
 	}
 }
@@ -340,8 +343,8 @@ void TaskEeprom()
 		// SaveEnergies();
 		// SaveMaxMinAvg();
 		SaveReleSatus();
-		// SaveReleStatistics();
-		// SaveAlarmsOccurence();
+		SaveReleStatistics();
+		SaveAlarmsOccurence();
 		
 		EEPROM.commit();
 		SaveAccomplished = true;
