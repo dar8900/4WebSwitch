@@ -25,6 +25,9 @@
 #define REFRESH_DELAY	     1000
 #define LOOPS_DELAY		     25
 
+#define RESTART 			true
+#define NO_RESTART			false
+
 TFT_eSPI Display = TFT_eSPI();
 
 Chrono RefreshPage, RefreshMeasure, SaveIconTimer;
@@ -194,17 +197,17 @@ const ENUM_VALUE PFHighThrEnum[MAX_PF_THR] =
 
 const SETUP_PARAMS SetupParams[MAX_SETUP_ITEMS] = 
 {
-	{"Stato WiFi"		          , ABILITATO			 	 , DISABILITATO         , ENUM_TYPE  , WifiEnum       ,  NULL  },
-	{"Delay salvataggio"          ,        60			 	 ,            1         , VALUE_TYPE , NULL           , "min"  },
-	{"Periodo media misure"       ,      3600			 	 ,            5         , VALUE_TYPE , NULL           ,   "s"  },
-	{"Simulazione"      		  , ABILITATO			 	 , DISABILITATO         , ENUM_TYPE  , DemoEnum       ,  NULL  },
-	{"Soglia sovra corrente"      , MAX_I_HIGH_THR - 1	 	 , 0                    , ENUM_TYPE  , CurrHighThrEnum,  "A"   },
-	{"Soglia sotto corrente"      , MAX_I_LOW_THR - 1	 	 , 0                    , ENUM_TYPE  , CurrLowThrEnum ,  "A"   },
-	{"Soglia sovra p. attiva"     , MAX_P_ATT_HIGH_THR - 1   , 0                  	, ENUM_TYPE  , PAttHighThrEnum,  "kW"  },
-	{"Soglia sovra p. reattiva"   , MAX_P_REA_HIGH_THR - 1   , 0                    , ENUM_TYPE  , PReaHighThrEnum,  "kVAr"},
-	{"Soglia sovra p. apparente"  , MAX_A_APP_HIGH_THR - 1   , 0                   	, ENUM_TYPE  , PAppHighThrEnum,  "kVA" },
-	{"Soglia sovra PF"            , MAX_PF_THR - 1		     , 0                    , ENUM_TYPE  , PFHighThrEnum  ,  NULL  },
-	{"Soglia sotto PF"            , MAX_PF_THR - 1		     , 0		    	    , ENUM_TYPE  , PFLowThrEnum   ,  NULL  },	
+	{"Stato WiFi"		          , ABILITATO			 	 , DISABILITATO         , ENUM_TYPE  , WifiEnum       ,  NULL  ,    RESTART},
+	{"Delay salvataggio"          ,        60			 	 ,            1         , VALUE_TYPE , NULL           , "min"  , NO_RESTART},
+	{"Periodo media misure"       ,      3600			 	 ,            5         , VALUE_TYPE , NULL           ,   "s"  , NO_RESTART},
+	{"Simulazione"      		  , ABILITATO			 	 , DISABILITATO         , ENUM_TYPE  , DemoEnum       ,  NULL  ,    RESTART},
+	{"Soglia sovra corrente"      , MAX_I_HIGH_THR - 1	 	 , 0                    , ENUM_TYPE  , CurrHighThrEnum,  "A"   , NO_RESTART},
+	{"Soglia sotto corrente"      , MAX_I_LOW_THR - 1	 	 , 0                    , ENUM_TYPE  , CurrLowThrEnum ,  "A"   , NO_RESTART},
+	{"Soglia sovra p. attiva"     , MAX_P_ATT_HIGH_THR - 1   , 0                  	, ENUM_TYPE  , PAttHighThrEnum,  "kW"  , NO_RESTART},
+	{"Soglia sovra p. reattiva"   , MAX_P_REA_HIGH_THR - 1   , 0                    , ENUM_TYPE  , PReaHighThrEnum,  "kVAr", NO_RESTART},
+	{"Soglia sovra p. apparente"  , MAX_A_APP_HIGH_THR - 1   , 0                   	, ENUM_TYPE  , PAppHighThrEnum,  "kVA" , NO_RESTART},
+	{"Soglia sovra PF"            , MAX_PF_THR - 1		     , 0                    , ENUM_TYPE  , PFHighThrEnum  ,  NULL  , NO_RESTART},
+	{"Soglia sotto PF"            , MAX_PF_THR - 1		     , 0		    	    , ENUM_TYPE  , PFLowThrEnum   ,  NULL  , NO_RESTART},	
 };
 
 
@@ -277,6 +280,7 @@ static void WichReset(uint8_t ResetItem)
 	{
 		case RESET_ENERGIES:
 			ResetTotalEnergy();
+			ResetEepEnergies();
 			break;
 		case RESET_PAR_ENERGIES:
 			ResetPartialEnergy();
@@ -292,6 +296,7 @@ static void WichReset(uint8_t ResetItem)
 			break;
 		case RESET_RELE_STAT:
 			ResetReleStatistics();
+			ResetEepReleStatistics();
 			break;
 		case RESTART_MCU:
 			ResetMcu();
@@ -707,6 +712,11 @@ static void RefreshSetupPage(uint8_t SetupItem, bool SetupSelected, bool ChangeP
 		Display.drawString(SetupParams[SetupItem].Udm, CENTER_POS(SetupParams[SetupItem].Udm), 145);		
 	}
 	Display.setFreeFont(FM9);
+	if(SetupParams[SetupItem].RestartMcu)
+	{
+		Display.drawString("Cambiare il parametro", CENTER_POS("Cambiare il parametro"), 160);
+		Display.drawString("causerà un riavvio", CENTER_POS("causerà un riavvio"), 175);
+	}
 	String SetupPageN = String(SetupItem + 1) + "/" + String(MAX_SETUP_ITEMS);
 	Display.drawString(SetupPageN, CENTER_POS(SetupPageN), 200);
 }
@@ -716,10 +726,7 @@ static void DrawSetupPage()
 	bool ExitSetupPage = false, SetupSelected = false, ChangeParams = false, Refresh = true;
 	uint8_t SetupItem = 0;
 	uint16_t ParamValue = 0;
-	// if(SetupParams[SetupItem].Type != ENUM_TYPE)
 	ParamValue = EepParamsValue[SetupItem];
-	// else
-		// ParamValue = SearchEnumIndex(SetupItem, EepParamsValue[SetupItem]);
 	while(!ExitSetupPage)
 	{
 		TaskManagement();
@@ -791,7 +798,8 @@ static void DrawSetupPage()
 						}
 						EepParamsValue[SetupItem] = ParamValue;
 						SaveParameters();
-						if(SetupItem == WIFI_STATUS)
+						DrawPopUp("Salvato", 1000);
+						if(SetupParams[SetupItem].RestartMcu)
 						{
 							DrawPopUp("Riavvio...", 2000);
 							ResetMcu();
@@ -1262,6 +1270,11 @@ static void DrawResetPage()
 				{
 					WichReset(ResetItem);
 					DrawPopUp("Reset eseguito", 1500);
+					if(ResetItem == RESET_ENERGIES || ResetItem == RESET_RELE_STAT)
+					{
+						DrawPopUp("Riavvio...", 2000);
+						ResetMcu();
+					}
 					Refresh = true;
 				}
 				else

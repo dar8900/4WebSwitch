@@ -8,7 +8,7 @@
 
 
 
-Chrono AlarmDelay(Chrono::SECONDS), AlarmReleDisconnectDelay(Chrono::SECONDS);
+Chrono AlarmInsertionDelay(Chrono::SECONDS), AlarmDisinsertionDelay(Chrono::SECONDS), AlarmReleDisconnectDelay(Chrono::SECONDS);
 
 ALARM_S Alarms[MAX_ALARM] = 
 {
@@ -164,6 +164,8 @@ static void AlarmsReleDisconnect()
 				TurnAllRele(STATUS_OFF);
 			}
 		}
+		else
+			AlarmReleDisconnectDelay.restart();
 	}
 }
 
@@ -197,13 +199,19 @@ void TaskAlarm()
 	AlarmsReleDisconnect();
 	if(CheckAlarms())
 	{
-		if(AlarmDelay.hasPassed(5, true) && !AlarmActive)
+		if(AlarmInsertionDelay.hasPassed(5, true) && !AlarmActive)
 			AlarmActive = true;
+		else if(AlarmActive)
+			AlarmInsertionDelay.restart();
+		AlarmDisinsertionDelay.restart();
 	}
 	else
 	{
-		AlarmDelay.restart();
-		AlarmActive = false;
+		AlarmInsertionDelay.restart();
+		if(AlarmDisinsertionDelay.hasPassed(5, true) && AlarmActive)
+			AlarmActive = false;
+		else if(!AlarmActive)
+			AlarmDisinsertionDelay.restart();
 	}
 }
 

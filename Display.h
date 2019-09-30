@@ -191,15 +191,18 @@ typedef struct
 	const uint16_t EnumValue;
 }ENUM_VALUE;
 
+
+
+
 typedef struct
 {
-	const char    *ParamTitle;
-	// uint16_t       Value;
-	const uint16_t MaxVal; 
-	const uint16_t MinVal;	
-	const uint8_t  Type;
+	const char        *ParamTitle;
+	const uint16_t    MaxVal; 
+	const uint16_t    MinVal;	
+	const uint8_t     Type;
 	const ENUM_VALUE  *EnumList;
-	const char *Udm;
+	const char        *Udm;
+	bool 	    	  RestartMcu;
 }SETUP_PARAMS;
 
 typedef enum

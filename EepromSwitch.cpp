@@ -197,7 +197,6 @@ static void LoadReleSatus()
 		{
 			EEPROM.put(EepromAddrInit, STATUS_OFF);
 			EepromAddrInit += RELE_STATUS_SIZE;		
-			delay(1);
 		}	
 		EEPROM.commit();
 	}	
@@ -206,9 +205,7 @@ static void LoadReleSatus()
 		uint8_t Status = 0;
 		EEPROM.get(EepromAddrInit, Status);
 		ReleInitStatus[i] = Status;
-		// SwichReleStatus(i, Status);
 		EepromAddrInit += RELE_STATUS_SIZE;		
-		delay(1);
 	}	
 	
 }
@@ -303,6 +300,37 @@ static void LoadParameters()
 		EEPROM.get(EepromAddrInit, EepParamsValue[i]);
 		EepromAddrInit += SETUP_PARAM_VALUE_SIZE;
 	}
+}
+
+
+void ResetDfltEepParams()
+{
+	EEPROM.write(SETUP_PARAMS_CHECK_ADDR, 0);
+	EEPROM.commit();
+}
+
+void ResetEepEnergies()
+{
+	EEPROM.write(ENERGIES_CHECK_ADDR, 0);
+	EEPROM.commit();
+}
+
+void ResetEepMaxMinAvg()
+{
+	EEPROM.write(MAX_MIN_AVG_CHECK_ADDR, 0);
+	EEPROM.commit();
+}
+
+void ResetEepAlarms()
+{
+	EEPROM.write(ALARMS_OCCUR_CHECK_ADDR, 0);
+	EEPROM.commit();
+}
+
+void ResetEepReleStatistics()
+{
+	EEPROM.write(RELE_STAT_CHECK_ADD, 0);
+	EEPROM.commit();
 }
 
 static void CheckFirstGo()
