@@ -18,9 +18,10 @@ typedef enum
 	SETUP_PAGE,           // 3
 	ALARM_SETUP_PAGE,     // 4
 	ALARM_STATUS_PAGE,    // 5
-	RESET_PAGE,           // 6
+	RELE_STAT,            // 6
+	RESET_PAGE,           // 7
 	// DEMO_MODE, 			  // 7
-	MAX_PAGES 			  // 7
+	MAX_PAGES 			  // 8
 }MAIN_PAGES;
 
 
@@ -208,6 +209,7 @@ typedef enum
 	RESET_MAX_MIN,
 	RESET_AVG,
 	RESET_N_ALARMS,
+	RESET_RELE_STAT,
 	RESTART_MCU,
 	MAX_RESET_ITEMS
 }RESET_ITEMS;

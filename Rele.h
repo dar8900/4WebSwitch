@@ -24,5 +24,6 @@ void ToggleRele(uint8_t WichRele);
 void SwichReleStatus(uint8_t WichRele, uint8_t Status);
 
 void RefreshReleStatistics(void);
+void ResetReleStatistics(void);
 
 #endif

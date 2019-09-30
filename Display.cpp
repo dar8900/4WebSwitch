@@ -219,6 +219,7 @@ const char *Reset[MAX_RESET_ITEMS] =
 	"Reset max e min",
 	"Reset medie",
 	"Reset allarmi",
+	"Reset statistiche prese",
 	"Restart switch",
 };
 
@@ -288,6 +289,9 @@ static void WichReset(uint8_t ResetItem)
 			break;
 		case RESET_N_ALARMS:
 			ResetAlarms();
+			break;
+		case RESET_RELE_STAT:
+			ResetReleStatistics();
 			break;
 		case RESTART_MCU:
 			ResetMcu();
@@ -1116,6 +1120,85 @@ static void DrawAlarmStatusPage()
 
 }
 
+static void RefreshReleStatisticsPage(uint8_t ReleIndex, bool ReleSelected)
+{
+	String NomePresa = "Presa " + String(ReleIndex + 1);
+	String TurnOnTimes = "Accensioni: " + String(ReleStatistics[ReleIndex].NSwitches);
+	String PowerOnTimeStr = "In funzione da: " + FormatTime(ReleStatistics[ReleIndex].PowerOnTime, true);
+	Display.setFreeFont(FMB12);
+	Display.setTextColor(TFT_YELLOW);
+	Display.drawString(NomePresa, CENTER_POS(NomePresa), 30);
+	Display.setFreeFont(FMB9);
+	Display.setTextColor(TFT_WHITE);
+	Display.drawString(TurnOnTimes, CENTER_POS(TurnOnTimes), 60);
+	Display.drawString(PowerOnTimeStr, CENTER_POS(PowerOnTimeStr), 90);
+	if(ReleSelected)
+		Display.drawRoundRect(0, 25, Display.width(), 100, 4, TFT_WHITE);
+}
+
+static void DrawReleStatistics()
+{
+	bool ExitStatistics = false, ReleSelected = false, Refresh = true;
+	uint8_t ReleIndex = 0;
+	RefreshPage.restart();
+	while(!ExitStatistics)
+	{
+		TaskManagement();
+		if(Refresh)
+		{
+			Refresh = false;
+			ClearScreen(true);
+		}
+		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+			ClearTopBottomBar();
+		DrawTopInfoBar();
+		DrawPageChange(ActualPage, !ReleSelected);
+		RefreshReleStatisticsPage(ReleIndex, ReleSelected);
+		ButtonPress = CheckButtons();
+		switch(ButtonPress)
+		{
+			case B_UP:
+			case B_DOWN:
+				ReleSelected = !ReleSelected;
+				Refresh = true;
+				ActualPage = RELE_STAT;
+				break;
+			case B_LEFT:
+				if(ReleSelected)
+				{
+					if(ReleIndex < N_RELE - 1)
+						ReleIndex++;
+					else
+						ReleIndex = 0;
+				}
+				else
+				{
+					if(ActualPage < MAX_PAGES - 1)
+						ActualPage++;
+					else
+						ActualPage = 0;
+				}
+				Refresh = true;
+				break;
+			case B_OK:
+				if(ReleSelected)
+				{
+					Refresh = true;
+				}
+				else
+				{
+					RefreshPage.stop();
+					ClearScreen(true);
+					ExitStatistics = true;
+				}
+				break;
+			default:
+				break;
+		}
+		delay(LOOPS_DELAY);
+	}	
+}
+
 
 static void RefreshResetList(uint8_t ResetItem, bool ResetSelected)
 {
@@ -1298,6 +1381,9 @@ void TaskMain()
 			break;
 		case ALARM_STATUS_PAGE:
 			DrawAlarmStatusPage();
+			break;
+		case RELE_STAT:
+			DrawReleStatistics();
 			break;
 		case RESET_PAGE:
 			DrawResetPage();

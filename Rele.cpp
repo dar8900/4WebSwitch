@@ -11,7 +11,7 @@ SHIFTY_REG ShiftReg;
 RELE_LIB   Rele;
 
 RELE_INFO_S ReleStatistics[N_RELE];
-Chrono PowerOnTimeTimer;
+Chrono PowerOnTimeTimer[N_RELE];
 
 void ReleInit()
 {
@@ -23,6 +23,7 @@ void ReleInit()
 	
 	for(int ReleIndex = 0; ReleIndex < N_RELE; ReleIndex++)
 	{
+		ReleStatistics[ReleIndex].OldStatus = ReleInitStatus[ReleIndex];
 		SwichReleStatus(ReleIndex, ReleInitStatus[ReleIndex]);
 		delay(50);
 	}
@@ -105,8 +106,19 @@ void RefreshReleStatistics()
 		}
 		if(ActualStatus == STATUS_ON)
 		{
-			if(PowerOnTimeTimer.hasPassed(1000, true))
+			if(PowerOnTimeTimer[ReleIndex].hasPassed(1000, true))
 				ReleStatistics[ReleIndex].PowerOnTime++;
 		}
+		else
+			PowerOnTimeTimer[ReleIndex].restart();
+	}
+}
+
+void ResetReleStatistics()
+{
+	for(int i = 0; i < N_RELE; i++)
+	{
+		ReleStatistics[i].NSwitches = 0;
+		ReleStatistics[i].PowerOnTime = 0;		
 	}
 }
