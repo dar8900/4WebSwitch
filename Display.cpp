@@ -22,7 +22,7 @@
 
 #define MEASURE_IN_PAGE 	3
 
-#define REFRESH_DELAY	     1000
+#define REFRESH_DELAY	     2500
 #define LOOPS_DELAY		     25
 
 #define RESTART 			true
@@ -392,10 +392,6 @@ static void DrawReleStatus()
 	for(int i = 0; i < N_RELE; i++)
 	{
 		NomePresa = String(i + 1);
-		// if(Rele.getReleStatus(i) == STATUS_OFF)
-			// Display.fillCircle((CircleRadius + 10) + (i * ((CircleRadius * 2) + 6)), 150, CircleRadius, TFT_RED);
-		// else
-			// Display.fillCircle((CircleRadius + 10) + (i * ((CircleRadius * 2) + 6)), 150, CircleRadius, TFT_GREEN);
 		if(Rele.getReleStatus(i) == STATUS_OFF)
 			Display.drawXBitmap(10 + (i * (70 + 5)), 115, IconaPresa_bits, 70, 70, TFT_RED);
 		else
@@ -621,12 +617,23 @@ static void DrawRelePage()
 		switch(ButtonPress)
 		{
 			case B_UP:
-			case B_DOWN:
-				ReleStatusSelected = !ReleStatusSelected;
-				Refresh = true;
-				ActualPage = RELE_PAGE;
+				if(ReleStatusSelected)
+				{
+					if(ReleIndex > 0)
+						ReleIndex--;
+					else
+						ReleIndex = N_RELE - 1;
+				}
+				else
+				{
+					if(ActualPage > 0)
+						ActualPage--;
+					else
+						ActualPage = MAX_PAGES - 1;
+				}				
+				Refresh = true;				
 				break;
-			case B_LEFT:
+			case B_DOWN:
 				if(ReleStatusSelected)
 				{
 					if(ReleIndex < N_RELE - 1)
@@ -641,7 +648,12 @@ static void DrawRelePage()
 					else
 						ActualPage = MAIN_PAGE;
 				}
+				Refresh = true;				
+				break;
+			case B_LEFT:
+				ReleStatusSelected = !ReleStatusSelected;
 				Refresh = true;
+				ActualPage = RELE_PAGE;
 				break;
 			case B_OK:
 				if(ReleStatusSelected)
@@ -662,19 +674,6 @@ static void DrawRelePage()
 		delay(LOOPS_DELAY);
 	}
 }
-
-static int SearchEnumIndex(uint8_t SetupItem, uint16_t ParamValue)
-{
-	int EnumIndex = 0;
-	for(EnumIndex = 0; EnumIndex <= SetupParams[SetupItem].MaxVal; EnumIndex++)
-	{
-		if(SetupParams[SetupItem].EnumList[EnumIndex].EnumValue == ParamValue)
-			return EnumIndex;
-		
-	}
-	return 0;
-}
-
 
 static void RefreshSetupPage(uint8_t SetupItem, bool SetupSelected, bool ChangeParams, uint16_t ParamValue)
 {
@@ -969,12 +968,23 @@ static void DrawAlarmSetupPage()
 		switch(ButtonPress)
 		{
 			case B_UP:
-			case B_DOWN:
-				AlarmSelected = !AlarmSelected;
-				Refresh = true;
-				ActualPage = ALARM_SETUP_PAGE;
+				if(AlarmSelected)
+				{
+					if(AlarmItem > 0)
+						AlarmItem--;
+					else
+						AlarmItem = MAX_ALARM - 1;
+				}
+				else
+				{
+					if(ActualPage > 0)
+						ActualPage--;
+					else
+						ActualPage = MAX_PAGES - 1;
+				}		
+				Refresh = true;		
 				break;
-			case B_LEFT:
+			case B_DOWN:
 				if(AlarmSelected)
 				{
 					if(AlarmItem < MAX_ALARM - 1)
@@ -988,8 +998,13 @@ static void DrawAlarmSetupPage()
 						ActualPage++;
 					else
 						ActualPage = 0;
-				}
+				}		
 				Refresh = true;
+				break;
+			case B_LEFT:
+				AlarmSelected = !AlarmSelected;
+				Refresh = true;
+				ActualPage = ALARM_SETUP_PAGE;
 				break;
 			case B_OK:
 				if(AlarmSelected)
@@ -1093,12 +1108,23 @@ static void DrawAlarmStatusPage()
 		switch(ButtonPress)
 		{
 			case B_UP:
-			case B_DOWN:
-				AlarmSelected = !AlarmSelected;
-				Refresh = true;
-				ActualPage = ALARM_STATUS_PAGE;
+				if(AlarmSelected)
+				{
+					if(AlarmItem > 0)
+						AlarmItem--;
+					else
+						AlarmItem = MAX_ALARM - 1;
+				}
+				else
+				{
+					if(ActualPage > 0)
+						ActualPage--;
+					else
+						ActualPage = MAX_PAGES - 1;
+				}
+				Refresh = true;		
 				break;
-			case B_LEFT:
+			case B_DOWN:
 				if(AlarmSelected)
 				{
 					if(AlarmItem < MAX_ALARM - 1)
@@ -1114,6 +1140,11 @@ static void DrawAlarmStatusPage()
 						ActualPage = 0;
 				}
 				Refresh = true;
+				break;
+			case B_LEFT:
+				AlarmSelected = !AlarmSelected;
+				Refresh = true;
+				ActualPage = ALARM_STATUS_PAGE;				
 				break;
 			case B_OK:
 				RefreshPage.stop();
@@ -1166,12 +1197,23 @@ static void DrawReleStatistics()
 		switch(ButtonPress)
 		{
 			case B_UP:
-			case B_DOWN:
-				ReleSelected = !ReleSelected;
-				Refresh = true;
-				ActualPage = RELE_STAT;
+				if(ReleSelected)
+				{
+					if(ReleIndex > 0)
+						ReleIndex--;
+					else
+						ReleIndex = N_RELE - 1;
+				}
+				else
+				{
+					if(ActualPage > 0)
+						ActualPage--;
+					else
+						ActualPage = MAX_PAGES - 1;
+				}
+				Refresh = true;		
 				break;
-			case B_LEFT:
+			case B_DOWN:
 				if(ReleSelected)
 				{
 					if(ReleIndex < N_RELE - 1)
@@ -1187,6 +1229,11 @@ static void DrawReleStatistics()
 						ActualPage = 0;
 				}
 				Refresh = true;
+				break;
+			case B_LEFT:
+				ReleSelected = !ReleSelected;
+				Refresh = true;
+				ActualPage = RELE_STAT;				
 				break;
 			case B_OK:
 				if(ReleSelected)
@@ -1243,12 +1290,23 @@ static void DrawResetPage()
 		switch(ButtonPress)
 		{
 			case B_UP:
-			case B_DOWN:
-				ResetSelected = !ResetSelected;
+				if(ResetSelected)
+				{
+					if(ResetItem > 0)
+						ResetItem--;
+					else
+						ResetItem = MAX_RESET_ITEMS - 1;
+				}
+				else
+				{
+					if(ActualPage > 0)
+						ActualPage--;
+					else
+						ActualPage = MAX_PAGES - 1;
+				}
 				Refresh = true;
-				ActualPage = RESET_PAGE;
 				break;
-			case B_LEFT:
+			case B_DOWN:
 				if(ResetSelected)
 				{
 					if(ResetItem < MAX_RESET_ITEMS - 1)
@@ -1263,7 +1321,12 @@ static void DrawResetPage()
 					else
 						ActualPage = 0;
 				}
+				Refresh = true;			
+				break;
+			case B_LEFT:
+				ResetSelected = !ResetSelected;
 				Refresh = true;
+				ActualPage = RESET_PAGE;				
 				break;
 			case B_OK:
 				if(ResetSelected)
