@@ -336,6 +336,7 @@ void DrawPopUp(const char *Text, uint16_t Delay)
 	ClearScreen(true);
 }
 
+
 static void DrawTopInfoBar()
 {
 	String FWVers = "v" + String(FW_VERSION);
@@ -383,6 +384,23 @@ static void DrawPageChange(int8_t Page, bool Selected)
 		Display.drawRoundRect( XPos - 2,  YPos - 2,  Display.textWidth((String)DisplayPages[Page]) + 4,  Display.fontHeight() + 2,  2,  TFT_WHITE);
 	Display.drawString((String)DisplayPages[Page], XPos, YPos);
 }
+
+
+static void BackgroundTaskAndRefresh(bool Refresh, uint8_t ActualPage, bool ItemSelected)
+{
+	TaskManagement();
+	if(Refresh)
+	{
+		Refresh = false;
+		ClearScreen(true);
+	}
+	if(RefreshPage.hasPassed(REFRESH_DELAY, true))
+		ClearTopBottomBar();
+	DrawTopInfoBar();
+	DrawPageChange(ActualPage, !ItemSelected);
+}
+
+
 
 static void DrawReleStatus()
 {
@@ -602,16 +620,7 @@ static void DrawRelePage()
 	RefreshPage.restart();
 	while(!ExitRelePage)
 	{
-		TaskManagement();
-		if(Refresh)
-		{
-			Refresh = false;
-			ClearScreen(true);
-		}
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
-			ClearTopBottomBar();
-		DrawTopInfoBar();
-		DrawPageChange(ActualPage, !ReleStatusSelected);
+		BackgroundTaskAndRefresh(Refresh, ActualPage, ReleStatusSelected);
 		RefreshReleChangeStatus(ReleIndex, ReleStatusSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
@@ -728,16 +737,7 @@ static void DrawSetupPage()
 	ParamValue = EepParamsValue[SetupItem];
 	while(!ExitSetupPage)
 	{
-		TaskManagement();
-		if(Refresh)
-		{
-			Refresh = false;
-			ClearScreen(true);
-		}
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
-			ClearTopBottomBar();
-		DrawTopInfoBar();
-		DrawPageChange(ActualPage, !SetupSelected);
+		BackgroundTaskAndRefresh(Refresh, ActualPage, SetupSelected);
 		RefreshSetupPage(SetupItem, SetupSelected, ChangeParams, ParamValue);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
@@ -953,16 +953,7 @@ static void DrawAlarmSetupPage()
 	RefreshPage.restart();
 	while(!ExitAlarmSetupPage)
 	{
-		TaskManagement();
-		if(Refresh)
-		{
-			Refresh = false;
-			ClearScreen(true);
-		}
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
-			ClearTopBottomBar();
-		DrawTopInfoBar();
-		DrawPageChange(ActualPage, !AlarmSelected);
+		BackgroundTaskAndRefresh(Refresh, ActualPage, AlarmSelected);
 		RefreshAlarmSetupList(AlarmItem, AlarmSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
@@ -1093,16 +1084,7 @@ static void DrawAlarmStatusPage()
 	RefreshPage.restart();
 	while(!ExitAlarmStatusPage)
 	{
-		TaskManagement();
-		if(Refresh)
-		{
-			Refresh = false;
-			ClearScreen(true);
-		}
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
-			ClearTopBottomBar();
-		DrawTopInfoBar();
-		DrawPageChange(ActualPage, !AlarmSelected);
+		BackgroundTaskAndRefresh(Refresh, ActualPage, AlarmSelected);
 		RefreshAlarmStatus(AlarmItem, AlarmSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
@@ -1182,16 +1164,7 @@ static void DrawReleStatistics()
 	RefreshPage.restart();
 	while(!ExitStatistics)
 	{
-		TaskManagement();
-		if(Refresh)
-		{
-			Refresh = false;
-			ClearScreen(true);
-		}
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
-			ClearTopBottomBar();
-		DrawTopInfoBar();
-		DrawPageChange(ActualPage, !ReleSelected);
+		BackgroundTaskAndRefresh(Refresh, ActualPage, ReleSelected);
 		RefreshReleStatisticsPage(ReleIndex, ReleSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
@@ -1275,16 +1248,7 @@ static void DrawResetPage()
 	RefreshPage.restart();
 	while(!ExitResetPage)
 	{
-		TaskManagement();
-		if(Refresh)
-		{
-			Refresh = false;
-			ClearScreen(true);
-		}
-		if(RefreshPage.hasPassed(REFRESH_DELAY, true))
-			ClearTopBottomBar();
-		DrawTopInfoBar();
-		DrawPageChange(ActualPage, !ResetSelected);
+		BackgroundTaskAndRefresh(Refresh, ActualPage, ResetSelected);
 		RefreshResetList(ResetItem, ResetSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
