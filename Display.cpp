@@ -49,6 +49,7 @@ const char * DisplayPages[MAX_PAGES] =
 	"Setup"           ,
 	"Abilita allarmi" ,
 	"Stato allarmi"   ,
+	"Stat. prese"     ,
 	"Reset"           ,
 };
 
@@ -222,7 +223,7 @@ const char *Reset[MAX_RESET_ITEMS] =
 	"Reset max e min",
 	"Reset medie",
 	"Reset allarmi",
-	"Reset statistiche prese",
+	"Reset stat. prese",
 	"Restart switch",
 };
 
@@ -386,12 +387,12 @@ static void DrawPageChange(int8_t Page, bool Selected)
 }
 
 
-static void BackgroundTaskAndRefresh(bool Refresh, uint8_t ActualPage, bool ItemSelected)
+static void BackgroundTaskAndRefresh(bool *Refresh, uint8_t ActualPage, bool ItemSelected)
 {
 	TaskManagement();
-	if(Refresh)
+	if(*Refresh)
 	{
-		Refresh = false;
+		*Refresh = false;
 		ClearScreen(true);
 	}
 	if(RefreshPage.hasPassed(REFRESH_DELAY, true))
@@ -440,9 +441,12 @@ static void DrawMainScreen()
 		switch(ButtonPress)
 		{
 			case B_UP:
+				if(ActualPage > 0)
+					ActualPage--;
+				else
+					ActualPage = MAX_PAGES - 1;			
 				break;
 			case B_DOWN:
-				break;
 			case B_LEFT:
 				if(ActualPage < MAX_PAGES - 1)
 					ActualPage++;
@@ -620,7 +624,7 @@ static void DrawRelePage()
 	RefreshPage.restart();
 	while(!ExitRelePage)
 	{
-		BackgroundTaskAndRefresh(Refresh, ActualPage, ReleStatusSelected);
+		BackgroundTaskAndRefresh(&Refresh, ActualPage, ReleStatusSelected);
 		RefreshReleChangeStatus(ReleIndex, ReleStatusSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
@@ -723,7 +727,7 @@ static void RefreshSetupPage(uint8_t SetupItem, bool SetupSelected, bool ChangeP
 	if(SetupParams[SetupItem].RestartMcu)
 	{
 		Display.drawString("Cambiare il parametro", CENTER_POS("Cambiare il parametro"), 160);
-		Display.drawString("causerà un riavvio", CENTER_POS("causerà un riavvio"), 175);
+		Display.drawString("provoca un riavvio", CENTER_POS("provoca un riavvio"), 175);
 	}
 	String SetupPageN = String(SetupItem + 1) + "/" + String(MAX_SETUP_ITEMS);
 	Display.drawString(SetupPageN, CENTER_POS(SetupPageN), 200);
@@ -737,7 +741,7 @@ static void DrawSetupPage()
 	ParamValue = EepParamsValue[SetupItem];
 	while(!ExitSetupPage)
 	{
-		BackgroundTaskAndRefresh(Refresh, ActualPage, SetupSelected);
+		BackgroundTaskAndRefresh(&Refresh, ActualPage, SetupSelected);
 		RefreshSetupPage(SetupItem, SetupSelected, ChangeParams, ParamValue);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
@@ -953,7 +957,7 @@ static void DrawAlarmSetupPage()
 	RefreshPage.restart();
 	while(!ExitAlarmSetupPage)
 	{
-		BackgroundTaskAndRefresh(Refresh, ActualPage, AlarmSelected);
+		BackgroundTaskAndRefresh(&Refresh, ActualPage, AlarmSelected);
 		RefreshAlarmSetupList(AlarmItem, AlarmSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
@@ -1084,7 +1088,7 @@ static void DrawAlarmStatusPage()
 	RefreshPage.restart();
 	while(!ExitAlarmStatusPage)
 	{
-		BackgroundTaskAndRefresh(Refresh, ActualPage, AlarmSelected);
+		BackgroundTaskAndRefresh(&Refresh, ActualPage, AlarmSelected);
 		RefreshAlarmStatus(AlarmItem, AlarmSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
@@ -1141,6 +1145,8 @@ static void DrawAlarmStatusPage()
 
 }
 
+Chrono RefreshReleStatTimer;
+
 static void RefreshReleStatisticsPage(uint8_t ReleIndex, bool ReleSelected)
 {
 	String NomePresa = "Presa " + String(ReleIndex + 1);
@@ -1152,7 +1158,11 @@ static void RefreshReleStatisticsPage(uint8_t ReleIndex, bool ReleSelected)
 	Display.setFreeFont(FMB9);
 	Display.setTextColor(TFT_WHITE);
 	Display.drawString(TurnOnTimes, CENTER_POS(TurnOnTimes), 60);
-	Display.drawString(PowerOnTimeStr, CENTER_POS(PowerOnTimeStr), 90);
+	if(RefreshReleStatTimer.hasPassed(1000, true))
+	{
+		Display.fillRect(0, 88, Display.width(), Display.fontHeight() + 2, BG_COLOR);
+		Display.drawString(PowerOnTimeStr, CENTER_POS(PowerOnTimeStr), 90);
+	}
 	if(ReleSelected)
 		Display.drawRoundRect(0, 25, Display.width(), 100, 4, TFT_WHITE);
 }
@@ -1164,7 +1174,7 @@ static void DrawReleStatistics()
 	RefreshPage.restart();
 	while(!ExitStatistics)
 	{
-		BackgroundTaskAndRefresh(Refresh, ActualPage, ReleSelected);
+		BackgroundTaskAndRefresh(&Refresh, ActualPage, ReleSelected);
 		RefreshReleStatisticsPage(ReleIndex, ReleSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
@@ -1248,7 +1258,7 @@ static void DrawResetPage()
 	RefreshPage.restart();
 	while(!ExitResetPage)
 	{
-		BackgroundTaskAndRefresh(Refresh, ActualPage, ResetSelected);
+		BackgroundTaskAndRefresh(&Refresh, ActualPage, ResetSelected);
 		RefreshResetList(ResetItem, ResetSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
