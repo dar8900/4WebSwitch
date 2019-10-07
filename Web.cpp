@@ -14,7 +14,7 @@
 #include "EepromSwitch.h"
 
 #define MY_WIFI_LIST		 3
-#define MAX_WIFI_DEVICE		10
+
 
 // #define ALEXA
 
@@ -29,17 +29,7 @@
 // extern String ReleTable_4;
 // extern String MeasureLines;
 
-typedef struct
-{
-	const char *SSID;
-	const char* Passwd;
-}NETWORK_LIST;
 
-typedef struct
-{
-	String DeviceSSID;
-	int32_t DeviceRSSI;
-}DEVICE_FOUND_DES;
 
 const char* HostName = "webSwitchStation";
 const uint16_t TimeShiftUTC = 7200;
@@ -62,6 +52,7 @@ Chrono ToggleRele1Timer;
 bool WifiConnected = false;
 uint8_t WifiSignal;
 uint32_t TimeInSecond = 0;
+uint8_t MyDeviceConnected;
 
 NETWORK_LIST MyNetworksList[MY_WIFI_LIST] = 
 {
@@ -71,6 +62,7 @@ NETWORK_LIST MyNetworksList[MY_WIFI_LIST] =
 };
 
 DEVICE_FOUND_DES WifiDeviceList[MAX_WIFI_DEVICE];
+uint8_t MaxWifiDeviceFounded;
 
 
 const char* ReleID[N_RELE] = 
@@ -105,9 +97,9 @@ String IPAddr()
 	return IP;
 }
 
-static uint8_t GetWifiSignalPower()
+uint8_t GetWifiSignalPower(int32_t RssiSignal)
 {
-	int32_t Signal = abs(WiFi.RSSI());	
+	int32_t Signal = abs(RssiSignal);	
 	if(Signal >= 0 && Signal <= 50)
 		return OTTIMO;
 	else if(Signal >= 51 && Signal <= 75)
@@ -195,6 +187,7 @@ static void ScanResult(int N_Device)
 			WifiDeviceList[Device].DeviceSSID = WiFi.SSID(Device);
 			WifiDeviceList[Device].DeviceRSSI = WiFi.RSSI(Device);
 		}
+		MaxWifiDeviceFounded = N_Device;
 	}
 	else
 	{
@@ -202,7 +195,8 @@ static void ScanResult(int N_Device)
 		{
 			WifiDeviceList[Device].DeviceSSID = WiFi.SSID(Device);
 			WifiDeviceList[Device].DeviceRSSI = WiFi.RSSI(Device);
-		}		
+		}	
+		MaxWifiDeviceFounded = 	MAX_WIFI_DEVICE;
 	}
 }
 
@@ -224,6 +218,7 @@ void WifiInit()
 				{
 					DBG(WifiDeviceList[DeviceFoundIndex].DeviceSSID);
 					MyDeviceFounded = true;
+					MyDeviceConnected = MyDeviceList;
 					break;
 				}
 			}
@@ -424,7 +419,7 @@ void TaskWeb()
 		{
 			GetTime();
 		}
-		WifiSignal = GetWifiSignalPower();
+		WifiSignal = GetWifiSignalPower(WiFi.SSID());
 		CheckWifiCon();
 	}
 	else
