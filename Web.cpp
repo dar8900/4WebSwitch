@@ -419,7 +419,7 @@ void TaskWeb()
 		{
 			GetTime();
 		}
-		WifiSignal = GetWifiSignalPower(WiFi.SSID());
+		WifiSignal = GetWifiSignalPower(WiFi.RSSI());
 		CheckWifiCon();
 	}
 	else

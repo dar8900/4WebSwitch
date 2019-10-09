@@ -1250,7 +1250,7 @@ static void RefreshWifiList(uint8_t WifiItemSel, bool WifiSelected)
 		WifiName = WifiDeviceList[WifiItem].DeviceSSID;
 		WifiSignalList = GetWifiSignalPower(WifiDeviceList[WifiItem].DeviceRSSI);
 		Display.drawString(WifiName, LEFT_POS, 16 + ((WifiItem * Display.fontHeight()) + 2));
-		if(String(MyNetworksList[MyDeviceConnected]) == WifiName)
+		if(String(MyNetworksList[MyDeviceConnected].SSID) == WifiName)
 		{
 			Display.setTextColor(TFT_GREEN);
 			Display.drawString(" Connesso", Display.textWidth(WifiName) + 2, 16 + ((WifiItem * Display.fontHeight()) + 2));
@@ -1270,7 +1270,7 @@ static void DrawWifiListPage()
 	while(!ExitWifiPage)
 	{
 		BackgroundTaskAndRefresh(&Refresh, ActualPage, WifiSelected);
-		RefreshWifiLis(WifiItem, WifiSelected);
+		RefreshWifiList(WifiItem, WifiSelected);
 		ButtonPress = CheckButtons();
 		switch(ButtonPress)
 		{
