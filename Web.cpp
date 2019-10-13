@@ -16,7 +16,7 @@
 #define MY_WIFI_LIST		 3
 
 
-// #define ALEXA
+#define ALEXA
 
 // extern String Header;
 // extern String WebPage_1;
