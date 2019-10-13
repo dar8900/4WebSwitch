@@ -266,7 +266,10 @@ void WifiInit()
 			DrawWiFiConnPage(String(MyNetworksList[MyDeviceList].SSID), IP_popup);
 		}
 		else
+		{
 			WifiConnected = false;
+			DrawPopUp("WiFi non trovato", 2000);
+		}
 	}
 
 }

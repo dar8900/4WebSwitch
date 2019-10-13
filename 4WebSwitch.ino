@@ -31,6 +31,8 @@ void setup()
 #ifdef TASK_DISPLAY	
 	DisplayInit();
 	DrawWelcomePage();
+	delay(2000);
+	DrawWifiWait();
 #endif	
 
 #ifdef TASK_WEB
