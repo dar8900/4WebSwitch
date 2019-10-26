@@ -32,7 +32,8 @@ void setup()
 	DisplayInit();
 	DrawWelcomePage();
 	delay(2000);
-	DrawWifiWait();
+	if(EepParamsValue[WIFI_STATUS] == ABILITATO)
+		DrawWifiWait();
 #endif	
 
 #ifdef TASK_WEB
