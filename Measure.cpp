@@ -40,7 +40,7 @@
 #define PEAK_V(V)					  (V * sqrt(2))
 
 #define TARP_VOLTAGE				  200.0
-#define TARP_CURRENT         	      0.07
+#define TARP_CURRENT         	      0.05
 
 #ifdef ARDUINO_BOARD_MCU
 #define MIN_ANALOG_V_READ  0.0001875
@@ -56,7 +56,7 @@ Chrono CalcEnergyTimer;
 uint16_t OldEnableSim;
 
 
-double   AdcCurrentValues[ADC_SAMPLING_RATE], AdcVoltageValues[ADC_SAMPLING_RATE], CurrentRmsAcc, VoltageRmsAcc, VoltageRmsAvgAcc, ActivePowerRmsAcc;
+double   AdcCurrentValues[ADC_SAMPLING_RATE], AdcVoltageValues[ADC_SAMPLING_RATE], CurrentRmsAcc, CurrentRmsAvgAcc, VoltageRmsAcc, VoltageRmsAvgAcc, ActivePowerRmsAcc;
 uint32_t EnergyAccumulatorCnt, AvgCounter;
 double   ApparentEnergyAccumulator, ActiveEnergyAccumulator, ReactiveEnergyAccumulator;
 double   CurrentAvgAcc, VoltageAvgAcc, ActivePowerAvgAcc, ReactivePowerAvgAcc, ApparentPowerAvgAcc, PowerFactorAvgAcc;
@@ -219,17 +219,21 @@ static void CalcMeasure()
 {
 	int Sample = 0;
 	double	VoltageMax = 0.0;
-	AnalogBoard.setMultiplexer(ADC_VOLTAGE_EXIT);
+	
 	for(int i = 0 ; i < ADC_SAMPLING_RATE; i++)
 	{
+		AnalogBoard.setMultiplexer(ADC_VOLTAGE_EXIT);
 		AdcVoltageValues[i] = AnalogBoard.getVolts(true) - VOLTAGE_VOLT_CORRECTION;
 		if(VoltageMax < AdcVoltageValues[i])
 			VoltageMax = AdcVoltageValues[i];
 		VoltageRmsAcc += (AdcVoltageValues[i] * AdcVoltageValues[i]);
-		
-		delayMicroseconds(1200);
-		// AnalogBoard.setMultiplexer(ADC_CURRENT_EXIT);
 		// delayMicroseconds(1200);
+
+		AnalogBoard.setMultiplexer(ADC_CURRENT_EXIT);
+		AdcCurrentValues[i] = AnalogBoard.getVolts(true) / BURDEN_R_VALUE * 1000; // Ottengo il valore in A
+		CurrentRmsAcc += (AdcCurrentValues[i] * AdcCurrentValues[i]);
+		delayMicroseconds(1200);
+		ActivePowerRmsAcc += ((AdcVoltageValues[i] * PEAK_V(220) * AdcCurrentValues[i]) * (AdcVoltageValues[i] * PEAK_V(220) * AdcCurrentValues[i]));
 	}		
 	VoltageRmsAcc /= ADC_SAMPLING_RATE;
 	VoltageRmsAcc = sqrt(VoltageRmsAcc);
@@ -238,79 +242,51 @@ static void CalcMeasure()
 	else 
 		VoltageRmsAvgAcc += ((VoltageRmsAcc * PEAK_V(220)) / 1);
 	VoltageRmsAcc = 0.0;
+
+	CurrentRmsAcc /= ADC_SAMPLING_RATE;
+	CurrentRmsAcc = sqrt(CurrentRmsAcc);
+	CurrentRmsAvgAcc += CurrentRmsAcc;
+	CurrentRmsAcc = 0.0;
+
 	SamplingWindow++;
+	
 	if(SamplingWindow == MAX_SAMPLING_WINDOW)
 	{
+		bool OneIsZero = false;
 		Measures.VoltageRMS = VoltageRmsAvgAcc / SamplingWindow;
-		VoltageRmsAvgAcc = 0.0;
-		SamplingWindow = 0; 
+		VoltageRmsAvgAcc = 0.0; 
 		if(Measures.VoltageRMS < TARP_VOLTAGE)
+		{
 			Measures.VoltageRMS = 0.0;
+			OneIsZero = true;
+		}
 		else
 			Measures.VoltageRMS = floor(Measures.VoltageRMS * 1000) / 1000;
+
+		Measures.CurrentRMS = CurrentRmsAvgAcc / SamplingWindow;
+		if(Measures.CurrentRMS < TARP_CURRENT)
+		{
+			Measures.CurrentRMS = 0.0;
+			OneIsZero = true;
+		}
+		else
+			Measures.CurrentRMS = floor(Measures.CurrentRMS * 1000) / 1000;
+		CurrentRmsAvgAcc = 0.0;
+		Measures.ActivePower = sqrt(ActivePowerRmsAcc / (ADC_SAMPLING_RATE * SamplingWindow));
+		if(OneIsZero)
+		{
+			Measures.ApparentPower = 0.0;
+			Measures.ReactivePower = 0.0;
+			Measures.PowerFactor = INVALID_PF_VALUE;		
+		}
+		else
+		{
+			Measures.ApparentPower = Measures.VoltageRMS * Measures.CurrentRMS;
+			Measures.ReactivePower = Measures.ActivePower - Measures.ActivePower;
+			Measures.PowerFactor = Measures.ActivePower / Measures.ApparentPower;
+		}
+		SamplingWindow = 0;
 	}
-	
-	// bool ZeroVFound = false;
-	// double ActivePowerTemp = 0.0;
-	// ZeroVFound = SearchZeroV();
-	// if(ZeroVFound)
-	// {
-		// // Tempo impiegato teoricamente 50ms
-		// for(Sample = (SamplingWindow * ADC_SAMPLING_RATE); Sample < (ADC_SAMPLING_RATE + (SamplingWindow * ADC_SAMPLING_RATE)); Sample++)
-		// {
-			// AnalogBoard.setMultiplexer(ADC_VOLTAGE_EXIT);
-			// AdcVoltageValues[Sample] = AnalogBoard.getVolts(true) - VOLTAGE_VOLT_CORRECTION;
-			// delayMicroseconds(1200);
-			
-			// AnalogBoard.setMultiplexer(ADC_CURRENT_EXIT);
-			// AdcCurrentValues[Sample] = AnalogBoard.getVolts(true);
-			// delayMicroseconds(1200);
-			// CurrentRmsAcc += (AdcCurrentValues[Sample] * AdcCurrentValues[Sample]);
-			// VoltageRmsAcc += (AdcVoltageValues[Sample] * AdcVoltageValues[Sample]);
-			// ActivePowerTemp = ((AdcCurrentValues[Sample] / BURDEN_R_VALUE * 1000) * (AdcVoltageValues[Sample] * PEAK_V(220.0) / VOLTAGE_VOLT_CORRECTION * 1.84));
-			// ActivePowerRmsAcc += (ActivePowerTemp * ActivePowerTemp);
-		// }
-		// DBG("Zero V trovato");
-		// SamplingWindow++;
-		// if(SamplingWindow == MAX_SAMPLING_WINDOW)
-		// {
-			// DBG("Raggiunte le 5 finestre di campionamento");
-			// SamplingWindow = 0;
-			// CurrentRmsAcc /= ADC_SAMPLE;
-			// CurrentRmsAcc = sqrt(CurrentRmsAcc);
-			// VoltageRmsAcc /= ADC_SAMPLE;
-			// VoltageRmsAcc = sqrt(VoltageRmsAcc);
-			// ActivePowerRmsAcc /= ADC_SAMPLE;
-			// ActivePowerRmsAcc = sqrt(ActivePowerRmsAcc);
-			// Measures.ActivePower = ActivePowerRmsAcc;
-			// ActivePowerRmsAcc = 0.0;
-			// Measures.VoltageRMS = (VoltageRmsAcc * PEAK_V(220.0) / VOLTAGE_VOLT_CORRECTION  * 1.84);
-			// DBG(Measures.VoltageRMS);
-			// Measures.CurrentRMS = (CurrentRmsAcc / BURDEN_R_VALUE) * 1000;
-			// CurrentRmsAcc = 0.0;
-			// VoltageRmsAcc = 0.0;
-			// if(Measures.CurrentRMS <= TARP_CURRENT || Measures.VoltageRMS <= TARP_VOLTAGE)
-			// {
-				// if(Measures.CurrentRMS <= TARP_CURRENT)
-					// Measures.CurrentRMS = 0.0;
-				// if(Measures.VoltageRMS <= TARP_VOLTAGE)
-					// Measures.VoltageRMS = 0.0;
-				// Measures.ActivePower = 0.0;
-				// Measures.ApparentPower = 0.0;
-				// Measures.ReactivePower = 0.0;
-				// Measures.PowerFactor = INVALID_PF_VALUE;
-			// }
-			// else
-			// {
-				// Measures.ApparentPower = Measures.CurrentRMS * Measures.VoltageRMS;
-				// Measures.ReactivePower = Measures.ApparentPower - Measures.ActivePower;
-				// if(Measures.ApparentPower != 0.0)
-					// Measures.PowerFactor = Measures.ActivePower / Measures.ApparentPower;
-				// else
-					// Measures.PowerFactor = INVALID_PF_VALUE;
-			// }
-		// }
-	// }
 	CalcMaxMinAvg();
 }
 

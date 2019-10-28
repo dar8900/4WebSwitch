@@ -538,6 +538,12 @@ static void RefreshMeasurePage(uint8_t MeasurePageNumber)
 			MeasureToPrint = " " +  String(ActualMeasure, 3);
 		else
 			MeasureToPrint = String(ActualMeasure, 3);
+		if((MeasurePageNumber == LINE_MEASURES || MeasurePageNumber == MAX_LINE_MEASURES || MeasurePageNumber == MIN_LINE_MEASURES ||
+			MeasurePageNumber == AVG_LINE_MEASURES) && Line == 2)
+		{
+			if(ActualMeasure == INVALID_PF_VALUE)
+				MeasureToPrint = "---";
+		}
 		Display.setFreeFont(FMB18);
 		Display.drawString(MeasureToPrint, CENTER_POS(MeasureToPrint), 74 + (Line * (Display.fontHeight() + 10)));
 		Display.setFreeFont(FM9);
