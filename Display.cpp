@@ -1245,100 +1245,6 @@ static void DrawReleStatistics()
 }
 
 
-static void RefreshWifiList(uint8_t WifiItemSel, bool WifiSelected)
-{
-	int WifiItem = 0;
-	String WifiName = "";
-	uint8_t WifiSignalList = 0;
-	Display.setFreeFont(FMB9);
-	for(WifiItem = 0; WifiItem < MaxWifiDeviceFounded; WifiItem++)
-	{
-		WifiName = WifiDeviceList[WifiItem].DeviceSSID;
-		WifiSignalList = GetWifiSignalPower(WifiDeviceList[WifiItem].DeviceRSSI);
-		Display.drawString(WifiName, LEFT_POS, 16 + ((WifiItem * Display.fontHeight()) + 2));
-		if(String(MyNetworksList[MyDeviceConnected].SSID) == WifiName)
-		{
-			Display.setTextColor(TFT_GREEN);
-			Display.drawString(" Connesso", Display.textWidth(WifiName) + 2, 16 + ((WifiItem * Display.fontHeight()) + 2));
-			Display.setTextColor(TFT_WHITE);
-		}
-		Display.drawXBitmap(304, 18 + ((WifiItem * Display.fontHeight()) + 2), WifiIcons[WifiSignalList], 12, 12, TFT_CYAN);
-	}
-
-}
-
-
-static void DrawWifiListPage()
-{
-	bool ExitWifiPage = false, WifiSelected = false, Refresh = true;
-	uint8_t WifiItem = 0;
-	RefreshPage.restart();
-	while(!ExitWifiPage)
-	{
-		BackgroundTaskAndRefresh(&Refresh, ActualPage, WifiSelected);
-		RefreshWifiList(WifiItem, WifiSelected);
-		ButtonPress = CheckButtons();
-		switch(ButtonPress)
-		{
-			case B_UP:
-				if(WifiSelected)
-				{
-					// if(WifiItem > 0)
-					// 	WifiItem--;
-					// else
-					// 	WifiItem = MaxWifiDeviceFounded - 1;
-				}
-				else
-				{
-					if(ActualPage > 0)
-						ActualPage--;
-					else
-						ActualPage = MAX_PAGES - 1;
-				}
-				Refresh = true;
-				break;
-			case B_DOWN:
-				if(WifiSelected)
-				{
-					// if(WifiItem < MaxWifiDeviceFounded - 1)
-					// 	WifiItem++;
-					// else
-					// 	WifiItem = 0;
-				}
-				else
-				{
-					if(ActualPage < MAX_PAGES - 1)
-						ActualPage++;
-					else
-						ActualPage = 0;
-				}
-				Refresh = true;			
-				break;
-			case B_LEFT:
-				WifiSelected = !WifiSelected;
-				Refresh = true;
-				ActualPage = RESET_PAGE;				
-				break;
-			case B_OK:
-				if(WifiSelected)
-				{
-					Refresh = true;
-				}
-				else
-				{
-					RefreshPage.stop();
-					ClearScreen(true);
-					ExitWifiPage = true;
-				}
-				break;
-			default:
-				break;
-		}
-		delay(LOOPS_DELAY);
-	}
-}
-
-
 static void RefreshResetList(uint8_t ResetItem, bool ResetSelected)
 {
 	String ResetItemName = String(Reset[ResetItem]), ResetNumber = "";
@@ -1455,9 +1361,6 @@ void TaskMain()
 			break;
 		case RELE_STAT:
 			DrawReleStatistics();
-			break;
-		case WIFI_DEVICE_LIST:
-
 			break;
 		case RESET_PAGE:
 			DrawResetPage();
