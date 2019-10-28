@@ -29,17 +29,17 @@
 // extern String ReleTable_4;
 // extern String MeasureLines;
 
-typedef struct
-{
-	const char *SSID;
-	const char* Passwd;
-}NETWORK_LIST;
+// typedef struct
+// {
+// 	const char *SSID;
+// 	const char* Passwd;
+// }NETWORK_LIST;
 
-typedef struct
-{
-	String DeviceSSID;
-	int32_t DeviceRSSI;
-}DEVICE_FOUND_DES;
+// typedef struct
+// {
+// 	String DeviceSSID;
+// 	int32_t DeviceRSSI;
+// }DEVICE_FOUND_DES;
 
 const char* HostName = "webSwitchStation";
 const uint16_t TimeShiftUTC = 7200;
