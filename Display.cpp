@@ -50,6 +50,7 @@ const char * DisplayPages[MAX_PAGES] =
 	"Abilita allarmi" ,
 	"Stato allarmi"   ,
 	"Stat. prese"     ,
+	"Lista wifi"	  ,
 	"Reset"           ,
 };
 
@@ -546,6 +547,12 @@ static void RefreshMeasurePage(uint8_t MeasurePageNumber)
 			MeasureToPrint = " " +  String(ActualMeasure, 3);
 		else
 			MeasureToPrint = String(ActualMeasure, 3);
+		if((MeasurePageNumber == LINE_MEASURES || MeasurePageNumber == MAX_LINE_MEASURES || MeasurePageNumber == MIN_LINE_MEASURES ||
+			MeasurePageNumber == AVG_LINE_MEASURES) && Line == 2)
+		{
+			if(ActualMeasure == INVALID_PF_VALUE)
+				MeasureToPrint = "---";
+		}
 		Display.setFreeFont(FMB18);
 		Display.drawString(MeasureToPrint, CENTER_POS(MeasureToPrint), 74 + (Line * (Display.fontHeight() + 10)));
 		Display.setFreeFont(FM9);
@@ -1338,86 +1345,6 @@ static void DrawResetPage()
 }
 
 
-// static void RefreshDemoAct(bool DemoActive, bool ChangeDemoStatus)
-// {
-	// String DemoStr = "DISABILITATO";
-	// Display.setFreeFont(FMB18);
-	// if(DemoActive)
-	// {
-		// Display.setTextColor(TFT_RED);
-		// DemoStr = "ABILITATO";
-	// }
-	// else
-	// {
-		// Display.setTextColor(TFT_GREEN);
-		
-	// }
-	// Display.drawString(DemoStr, CENTER_POS(DemoStr), 70);
-	// Display.setTextColor(TFT_WHITE);
-	// if(ChangeDemoStatus)
-		// Display.drawRoundRect( CENTER_POS(DemoStr) - 4,  70 - 4,  Display.textWidth(DemoStr) + 4,  (Display.fontHeight() + 4),  2,  TFT_WHITE);
-// }
-
-
-// static void DrawDemoActPage()
-// {
-	// bool ExitDemoPage = false, ChangeDemoStatus = false, Refresh = true;
-	// bool DemoActive = EnableSimulation;
-	// while(!ExitDemoPage)
-	// {
-		// TaskManagement();
-		// if(Refresh)
-		// {
-			// Refresh = false;
-			// ClearScreen(true);
-		// }
-		// if(RefreshPage.hasPassed(REFRESH_DELAY, true))
-			// ClearTopBottomBar();
-		// DrawTopInfoBar();
-		// DrawPageChange(ActualPage, !ChangeDemoStatus);
-		// RefreshDemoAct(DemoActive, ChangeDemoStatus);
-		// ButtonPress = CheckButtons();
-		// switch(ButtonPress)
-		// {
-			// case B_UP:
-			// case B_DOWN:
-				// ChangeDemoStatus = !ChangeDemoStatus;
-				// Refresh = true;
-				// break;
-			// case B_LEFT:
-				// if(ChangeDemoStatus)
-					// DemoActive = !DemoActive;
-				// else
-				// {
-					// if(ActualPage < MAX_PAGES - 1)
-						// ActualPage++;
-					// else
-						// ActualPage = 0;
-				// }
-				// Refresh = true;
-				// break;
-			// case B_OK:
-				// if(ChangeDemoStatus)
-				// {
-					// EnableSimulation = DemoActive;
-					// if(DemoActive)
-						// DrawPopUp("DEMO ON", 1000);
-					// else
-						// DrawPopUp("DEMO OFF", 1000);
-				// }
-				// else
-				// {
-					// RefreshPage.stop();
-					// ClearScreen(true);
-					// ExitDemoPage = true;
-				// }
-				// break;
-			// default:
-				// break;
-		// }
-		// delay(LOOPS_DELAY);
-	// }
-// }
 
 void TaskMain()
 {

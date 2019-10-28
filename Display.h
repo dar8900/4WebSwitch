@@ -19,9 +19,9 @@ typedef enum
 	ALARM_SETUP_PAGE,     // 4
 	ALARM_STATUS_PAGE,    // 5
 	RELE_STAT,            // 6
-	RESET_PAGE,           // 7
-	// DEMO_MODE, 			  // 7
-	MAX_PAGES 			  // 8
+	WIFI_DEVICE_LIST,	  // 7
+	RESET_PAGE,           // 8
+	MAX_PAGES 			  // 9
 }MAIN_PAGES;
 
 
