@@ -3,7 +3,7 @@
 #include "ADS1115.h"
 #include "EepromSwitch.h"
 #include "Display.h"
-#include <stdint.h>
+
 
 #define SIM_WAVEFORMS
 
