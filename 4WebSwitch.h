@@ -1,6 +1,6 @@
 #ifndef WEB_4_SWITCH_H
 #define WEB_4_SWITCH_H
-
+#include <stdint.h>
 #include <Wire.h>
 #include <Chrono.h>
 
