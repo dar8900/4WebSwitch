@@ -249,13 +249,15 @@ void DrawWelcomePage()
 	Display.drawString("4 Web Switch", CENTER_POS("4 Web Switch"), 100);	
 }
 
-void DrawWifiWait()
+void DrawWifiWait(uint16_t ProgressBarCnt)
 {
 	String Str1 = "Cerco rete wifi", Str2 = "attendere...";
 	Display.setFreeFont(FMB12);
 	Display.drawRoundRect(0, 0, Display.width(), Display.height(), 5, TFT_WHITE);
 	Display.drawString(Str1, CENTER_POS(Str1), 50);
-	Display.drawString(Str2, CENTER_POS(Str2), 100);	
+	Display.drawString(Str2, CENTER_POS(Str2), 100);
+	Display.drawRect(59, 150, 121, 40, TFT_WHITE);	
+	Display.fillRect(60, 150, ProgressBarCnt, 40, TFT_WHITE);	
 }
 
 void DrawWiFiConnPage(String SSID, String IP_popup)

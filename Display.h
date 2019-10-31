@@ -221,7 +221,7 @@ extern const SETUP_PARAMS SetupParams[];
 
 void DisplayInit(void);
 void DrawWelcomePage(void);
-void DrawWifiWait(void);
+void DrawWifiWait(uint16_t ProgressBarCnt);
 void DrawWiFiConnPage(String SSID, String IP_popup);
 void ClearScreen(bool FullScreen);
 void DrawPopUp(const char *Text, uint16_t Delay);

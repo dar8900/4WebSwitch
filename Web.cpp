@@ -235,12 +235,15 @@ void WifiInit()
 	if(MyDeviceFounded && EepParamsValue[WIFI_STATUS] == ABILITATO)
 	{
 		bool ConnectionDone = true;
+		uint16_t ProgressBarCnt = 1;
 		WiFi.begin(MyNetworksList[MyDeviceList].SSID, MyNetworksList[MyDeviceList].Passwd);
 		Serial.print("Connecting...");
 		while (WiFi.status() != WL_CONNECTED)
 		{
-			delay(50);
+			delay(250);
 			Serial.print(".");
+			if(EepParamsValue[WIFI_STATUS] == ABILITATO)
+				DrawWifiWait(ProgressBarCnt++);			
 			if(ConnectionTimeOut.hasPassed(30, true))
 			{
 				ConnectionDone = false;
