@@ -42,7 +42,7 @@
 // }DEVICE_FOUND_DES;
 
 const char* HostName = "webSwitchStation";
-const uint16_t TimeShiftUTC = 7200;
+const uint16_t TimeShiftUTC = 3600; // 7200 ora solare
 
 // WiFiServer  server(80);
 WiFiUDP ntpUDP;
@@ -240,7 +240,7 @@ void WifiInit()
 		Serial.print("Connecting...");
 		while (WiFi.status() != WL_CONNECTED)
 		{
-			delay(250);
+			delay(150);
 			Serial.print(".");
 			if(EepParamsValue[WIFI_STATUS] == ABILITATO)
 				DrawWifiWait(ProgressBarCnt++);			
