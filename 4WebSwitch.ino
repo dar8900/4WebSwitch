@@ -1,3 +1,5 @@
+/* http://arduino.esp8266.com/stable/package_esp8266com_index.json */
+
 #include "4WebSwitch.h"
 #include "Rele.h"
 #include "Measure.h"
