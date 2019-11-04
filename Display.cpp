@@ -256,8 +256,8 @@ void DrawWifiWait(uint16_t ProgressBarCnt)
 	Display.drawRoundRect(0, 0, Display.width(), Display.height(), 5, TFT_WHITE);
 	Display.drawString(Str1, CENTER_POS(Str1), 50);
 	Display.drawString(Str2, CENTER_POS(Str2), 100);
-	Display.drawRect(59, 150, 201, 20, TFT_WHITE);	
-	Display.fillRect(60, 150, ProgressBarCnt, 20, TFT_WHITE);	
+	Display.drawRoundRect(59, 150, 201, 20, 4,TFT_WHITE);	
+	Display.fillRoundRect(60, 150, ProgressBarCnt, 20, 4,TFT_WHITE);	
 }
 
 void DrawWiFiConnPage(String SSID, String IP_popup)
