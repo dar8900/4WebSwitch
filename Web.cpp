@@ -164,10 +164,12 @@ static void AlexaInit()
 	AlexaControl.createServer(true); 
 	AlexaControl.setPort(80); 
 	AlexaControl.enable(true);	
-	AlexaControl.addDevice(ReleID[RELE_1]);
-	AlexaControl.addDevice(ReleID[RELE_2]);
-	AlexaControl.addDevice(ReleID[RELE_3]);
-	AlexaControl.addDevice(ReleID[RELE_4]);
+	for(int i = 0; i < N_RELE; i++)
+		AlexaControl.addDevice(ReleID[i]);
+	// AlexaControl.addDevice(ReleID[RELE_1]);
+	// AlexaControl.addDevice(ReleID[RELE_2]);
+	// AlexaControl.addDevice(ReleID[RELE_3]);
+	// AlexaControl.addDevice(ReleID[RELE_4]);
 	AlexaControl.onSetState([](unsigned char device_id, const char * device_name, bool state, unsigned char value) 
 	{
 		for(int ReleIndex = 0; ReleIndex < N_RELE; ReleIndex++)
@@ -238,6 +240,7 @@ void WifiInit()
 		uint16_t ProgressBarCnt = 1;
 		WiFi.begin(MyNetworksList[MyDeviceList].SSID, MyNetworksList[MyDeviceList].Passwd);
 		Serial.print("Connecting...");
+		ConnectionTimeOut.restart();
 		while (WiFi.status() != WL_CONNECTED)
 		{
 			delay(150);
@@ -250,6 +253,8 @@ void WifiInit()
 				break;
 			}
 		}
+		ConnectionTimeOut.restart();
+		ConnectionTimeOut.stop();
 		DBG("");
 		if(ConnectionDone)
 		{
