@@ -233,7 +233,7 @@ static void CalcMeasure()
 		AdcCurrentValues[i] = AnalogBoard.getVolts(true) / BURDEN_R_VALUE * 1000; // Ottengo il valore in A
 		CurrentRmsAcc += (AdcCurrentValues[i] * AdcCurrentValues[i]);
 		delayMicroseconds(1200);
-		ActivePowerRmsAcc += ((AdcVoltageValues[i] * PEAK_V(220) * AdcCurrentValues[i]) * (AdcVoltageValues[i] * PEAK_V(220) * AdcCurrentValues[i]));
+		ActivePowerRmsAcc += ((AdcVoltageValues[i] * PEAK_V(220) * AdcCurrentValues[i]));// * (AdcVoltageValues[i] * PEAK_V(220) * AdcCurrentValues[i]));
 	}		
 	VoltageRmsAcc /= ADC_SAMPLING_RATE;
 	VoltageRmsAcc = sqrt(VoltageRmsAcc);
@@ -272,7 +272,8 @@ static void CalcMeasure()
 		else
 			Measures.CurrentRMS = floor(Measures.CurrentRMS * 1000) / 1000;
 		CurrentRmsAvgAcc = 0.0;
-		Measures.ActivePower = sqrt(ActivePowerRmsAcc / (ADC_SAMPLING_RATE * SamplingWindow));
+		Measures.ActivePower = ActivePowerRmsAcc / (ADC_SAMPLING_RATE * SamplingWindow);
+		ActivePowerRmsAcc = 0.0;
 		if(OneIsZero)
 		{
 			Measures.ApparentPower = 0.0;
@@ -282,7 +283,7 @@ static void CalcMeasure()
 		else
 		{
 			Measures.ApparentPower = Measures.VoltageRMS * Measures.CurrentRMS;
-			Measures.ReactivePower = Measures.ActivePower - Measures.ActivePower;
+			Measures.ReactivePower = Measures.ApparentPower - Measures.ActivePower;
 			Measures.PowerFactor = Measures.ActivePower / Measures.ApparentPower;
 		}
 		SamplingWindow = 0;
@@ -301,12 +302,12 @@ static void CalcEnergy()
 	{
 		if(EnergyAccumulatorCnt != 0)
 		{
-			Measures.Energies.ApparentEnergy 	   += ((ApparentEnergyAccumulator / EnergyAccumulatorCnt) / 3600);
-			Measures.Energies.ActiveEnergy 		   += ((ActiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
-			Measures.Energies.ReactiveEnergy        += ((ReactiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
-			Measures.Energies.PartialApparentEnergy += ((ApparentEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
-			Measures.Energies.PartialActiveEnergy   += ((ActiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
-			Measures.Energies.PartialReactiveEnergy += ((ReactiveEnergyAccumulator / EnergyAccumulatorCnt)/ 3600);
+			Measures.Energies.ApparentEnergy 	    += ((ApparentEnergyAccumulator / EnergyAccumulatorCnt) / 3600);
+			Measures.Energies.ActiveEnergy 		    += ((ActiveEnergyAccumulator   / EnergyAccumulatorCnt) / 3600);
+			Measures.Energies.ReactiveEnergy        += ((ReactiveEnergyAccumulator / EnergyAccumulatorCnt) / 3600);
+			Measures.Energies.PartialApparentEnergy += ((ApparentEnergyAccumulator / EnergyAccumulatorCnt) / 3600);
+			Measures.Energies.PartialActiveEnergy   += ((ActiveEnergyAccumulator   / EnergyAccumulatorCnt) / 3600);
+			Measures.Energies.PartialReactiveEnergy += ((ReactiveEnergyAccumulator / EnergyAccumulatorCnt) / 3600);
 		}
 		ApparentEnergyAccumulator = 0.0;
 		ActiveEnergyAccumulator   = 0.0;

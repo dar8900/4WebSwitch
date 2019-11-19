@@ -278,7 +278,7 @@ void DrawWiFiConnPage(String SSID, String IP_popup)
 
 static void TaskManagement()
 {
-	if(RefreshMeasure.hasPassed(1000, true))
+	if(RefreshMeasure.hasPassed(500, true))
 		TaskMeasure();
 	TaskAlarm();
 	TaskWeb();

@@ -16,7 +16,7 @@
 #define NODE_MCU
 // #define ARDUINO_BOARD_MCU
 
-#define FW_VERSION 	1.06
+#define FW_VERSION 	1.07
 
 #ifdef NODE_MCU
 typedef enum
